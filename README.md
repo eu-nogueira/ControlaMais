@@ -1,16 +1,39 @@
-# React + Vite
+**Dashboard de Despesas e Receitas**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Um dashboard moderno para controle financeiro pessoal, permitindo o gerenciamento de despesas e receitas de forma simples, visual e eficiente.
 
-Currently, two official plugins are available:
+**Tecnologias Utilizadas:**
+React (com Hooks)
+Redux Toolkit (gerenciamento de estado)
+Chart.js (visualização de dados em gráficos)
+LocalStorage (persistência de dados no navegador)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Funcionalidades:**
 
-## React Compiler
+**Cadastro de Transações**
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Adicionar despesas e receitas
+Informar descrição, valor e data
 
-## Expanding the ESLint configuration
+**Filtros Inteligentes**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Visualizar:
+Todas as transações
+Apenas despesas
+Apenas receitas
+Filtrar por intervalo de datas
+
+**Dashboard Interativo**
+
+Gráficos dinâmicos com Chart.js
+Visualização clara do fluxo financeiro
+
+**Tema Claro e Escuro**
+
+Alternância entre modo claro e modo escuro
+Preferência pode ser persistida
+
+**Persistência de Dados**
+
+Todas as informações são salvas no LocalStorage
+Dados mantidos mesmo após recarregar a página
