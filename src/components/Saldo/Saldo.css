@@ -1,0 +1,33 @@
+.saldo {
+    background-color: #1f3519;
+    color: white;
+    width: 40%;
+    margin: 1rem;
+    margin-left: 2rem;
+    border-radius: 10px;
+}
+.saldoTotal {
+    padding: .5rem;
+    padding-left: 2rem;
+}
+
+.saldoAtual {
+    color: #57B358;
+}
+
+.saldoAtualNegativo {
+    color: #ef4444;
+}
+
+.receitas, .despesas {
+    background-color: #001C09;
+    width: 40%;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    border-radius: 15px;
+}
+
+.receitasDespesas {
+    display: flex;
+    justify-content: space-around;
+}

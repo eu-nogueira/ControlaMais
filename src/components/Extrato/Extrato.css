@@ -1,0 +1,8 @@
+.extrato {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    color: white;
+    width: 55%;
+    text-align: center;
+}
