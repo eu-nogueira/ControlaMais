@@ -6,3 +6,10 @@
     width: 55%;
     text-align: center;
 }
+
+.extrato ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
