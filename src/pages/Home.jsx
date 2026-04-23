@@ -8,12 +8,14 @@ import { adicionarConta } from '../store/extrato'
 function Home() {
   const [descricao, setDescricao] = useState('')
   const [valor, setValor] = useState('')
-  const [tipoConta, setTipoConta] = useState('')
+  const [tipoConta, setTipoConta] = useState('Receita')
   const dispatch = useDispatch()
 
   function handleAdicao() {
     const data = new Date()
-    const dataCadastro = `${data.getDate()}/${data.getMonth() +1}/${data.getFullYear()} ${data.getHours()}:${data.getMinutes()}`
+    const dataCadastro = new Intl.DateTimeFormat(
+      'pt-BR'
+    ).format(data)
     dispatch(adicionarConta({ descricao, dataCadastro, valor, tipoConta }))
   }
 
