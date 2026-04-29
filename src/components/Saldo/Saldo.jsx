@@ -10,7 +10,7 @@ function Saldo() {
     <div className='saldo'>
         <div className="saldoTotal">
             <h1>Saldo total</h1>
-            <h2 className='saldoAtual'>R$ {saldo.toFixed(2) || 0}</h2>
+            <h2 className={ saldo >= 0 ? 'saldoAtual' : 'saldoAtualNegativo'}>R$ {saldo.toFixed(2) || 0}</h2>
         </div>
         <div className="receitasDespesas">
             <div className="receitas">
