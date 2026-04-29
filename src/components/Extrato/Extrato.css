@@ -1,6 +1,4 @@
 .extrato {
-    position: absolute;
-    right: 1rem;
     top: 1rem;
     color: white;
     width: 55%;
@@ -12,4 +10,21 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+}
+
+@media screen and (max-width: 768px) {
+    .extrato {
+        margin: auto;
+        text-align: center;
+    }
+    
+    .extrato ul {
+        width: 100%;
+        text-align: center;
+        padding: 0;
+    }
+
+    .extrato li {
+        padding-top: 1rem;
+    }
 }
