@@ -10,7 +10,7 @@ function Extrato() {
           {contas?.length > 0 ?
               contas.map((conta, index) => (
                 <li key={index} style={conta.tipoConta === 'Despesa' ? {color: '#ef4444'} : {color: 'white'}}>
-                  {conta.tipoConta} {conta.dataCadastro} - {conta.descricao} - R$ {conta.valor}
+                  {conta.tipoConta} {conta.dataCadastro} - {conta.descricao} - R$ {conta.valorFormatado.toFixed(2).replace('.', ',')}
                 </li>
               ))
             : 
