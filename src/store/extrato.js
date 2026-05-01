@@ -14,10 +14,10 @@ const extrato = createSlice({
             reducer (state, action) {
             state.contasExtrato.push(action.payload)
             if(action.payload.tipoConta === 'Receita') {
-                state.saldoTotal += Number(action.payload.valor)
+                state.saldoTotal += Number(action.payload.valorFormatado)
             } else {
-                state.saldoTotal -= Number(action.payload.valor)
-                state.despesaMes -= Number(action.payload.valor)
+                state.saldoTotal -= Number(action.payload.valorFormatado)
+                state.despesaMes -= Number(action.payload.valorFormatado)
             }
         }, prepare(payload) {
             return toLocalStorage(payload)
