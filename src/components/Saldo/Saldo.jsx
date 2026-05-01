@@ -2,9 +2,9 @@ import { useSelector } from 'react-redux'
 import './Saldo.css'
 
 function Saldo() {
-    const saldo = useSelector((state) => state.extrato.data.saldoTotal)
-    const receitaMes = useSelector((state) => state.extrato.data.saldoTotal - state.extrato.data.despesaMes)
-    const despesaMes = useSelector((state) => state.extrato.data.despesaMes)
+    const saldo = useSelector((state) => state.extrato.saldoTotal)
+    const receitaMes = useSelector((state) => state.extrato.saldoTotal - state.extrato.despesaMes)
+    const despesaMes = useSelector((state) => state.extrato.despesaMes)
   return (
     <div className='saldo'>
         <div className="saldoTotal">

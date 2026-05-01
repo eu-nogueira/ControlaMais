@@ -54,5 +54,13 @@
 
     .selecaoDespesaReceita, .insert input {
         width: 90%;
+        height: 50px;
+        font-size: 13pt;
+    }
+
+    .insert button {
+        width: 90%;
+        font-size: 13pt;
+        margin-top: 1rem;
     }
 }
