@@ -12,6 +12,10 @@
     justify-content: space-between;
 }
 
+.extrato li {
+    margin-top: 1rem;
+}
+
 @media screen and (max-width: 768px) {
     .extrato {
         margin: auto;
@@ -25,6 +29,7 @@
     }
 
     .extrato li {
-        padding-top: 1rem;
+        padding: .5rem 0;
+        border-bottom: 1px solid black;
     }
 }

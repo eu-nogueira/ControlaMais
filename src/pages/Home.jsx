@@ -16,7 +16,11 @@ function Home() {
     const dataCadastro = new Intl.DateTimeFormat(
       'pt-BR'
     ).format(data)
+    if(valor > 0 && descricao) {
     dispatch(adicionarConta({ descricao, dataCadastro, valor, tipoConta }))
+    }
+    setValor('')
+    setDescricao('')
   }
 
   return (
