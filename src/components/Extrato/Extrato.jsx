@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import './Extrato.css'
 
 function Extrato() {
-  const contas = useSelector((state) => state.extrato.data.contasExtrato) || []
+  const contas = useSelector((state) => state.extrato.contasExtrato) || []
   return (
     <div className='extrato'>
         <h1>Extrato</h1>
