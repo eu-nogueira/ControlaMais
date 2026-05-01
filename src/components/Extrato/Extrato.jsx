@@ -2,12 +2,12 @@ import { useSelector } from 'react-redux'
 import './Extrato.css'
 
 function Extrato() {
-  const contas = useSelector((state) => state.extrato.contasExtrato)
+  const contas = useSelector((state) => state.extrato.data.contasExtrato) || []
   return (
     <div className='extrato'>
         <h1>Extrato</h1>
         <ul>
-          {contas.length > 0 ?
+          {contas?.length > 0 ?
               contas.map((conta, index) => (
                 <li key={index} style={conta.tipoConta === 'Despesa' ? {color: 'red'} : {color: 'white'}}>
                   {conta.tipoConta} {conta.dataCadastro} - {conta.descricao} - R$ {conta.valor}
