@@ -9,11 +9,23 @@
     list-style: none;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
 }
 
 .extrato li {
-    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    width: 70%;
+    margin: .5rem auto;
+}
+
+.btn-delete {
+    padding: 5px;
+    height: 50%;
+    border-radius: 5px;
+    background-color: #ef4444;
+    border: none;
+    cursor: pointer;
+    color: white;
 }
 
 @media screen and (max-width: 768px) {
@@ -31,5 +43,10 @@
     .extrato li {
         padding: .5rem 0;
         border-bottom: 1px solid black;
+        width: 100%;
+    }
+
+    .btn-delete {
+        margin-left: 1rem;
     }
 }
