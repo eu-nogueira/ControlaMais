@@ -23,8 +23,19 @@ const extrato = createSlice({
             return toLocalStorage(payload)
         }
     },
-        removerConta(state, payload) {
-
+        removerConta: {
+          reducer(state, action) {
+            const remove = state.contasExtrato.filter((contas) => contas.descricao !== action.payload.descricao)
+            state.contasExtrato = remove
+            if(action.payload.tipoConta === 'Receita') {
+                state.saldoTotal -= action.payload.valorFormatado
+            } else {
+                state.saldoTotal += action.payload.valorFormatado
+                state.despesaMes += action.payload.valorFormatado
+            }
+         }, prepare(payload) {
+              return toLocalStorage(payload)
+         }
         }
     }
 })

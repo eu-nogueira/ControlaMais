@@ -5,8 +5,8 @@ function Saldo() {
     const saldo = useSelector((state) => state.extrato.saldoTotal) || 0
     const receitaMes = useSelector((state) => state.extrato.saldoTotal - state.extrato.despesaMes) || 0
     const despesaMes = useSelector((state) => state.extrato.despesaMes) || 0
-    const porcentagemComprometimento = useSelector((state) => (despesaMes / receitaMes) * 100) || 0
-    const porcentagemRestante = ((receitaMes + despesaMes) / receitaMes) * 100 || 0
+    const porcentagemComprometimento = saldo > 0 ? ((despesaMes / receitaMes) * 100) : 0
+    const porcentagemRestante = receitaMes > 0 ? ((receitaMes + despesaMes) / receitaMes) * 100 : 0
   return (
     <div className='saldo'>
         <div className="saldoTotal">
