@@ -63,4 +63,8 @@
         font-size: 13pt;
         margin-top: 1rem;
     }
+
+    .info {
+        display: none;
+    }
 }

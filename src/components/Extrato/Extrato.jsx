@@ -16,7 +16,7 @@ function Extrato() {
         <ul>
           {contas?.length > 0 ?
               contas.map((conta, index) => (
-                <li key={index} style={conta.tipoConta === 'Despesa' ? {color: '#ef4444'} : {color: 'white'}}>
+                <li key={index} className={conta.tipoConta === 'Despesa' ? 'despesa' : 'receita'}>
                   {conta.tipoConta} {conta.dataCadastro} - {conta.descricao} - R$ {conta.valorFormatado.toFixed(2).replace('.', ',')}
                   <button className='btn-delete' onClick={() => handleDelete(conta)}>Excluir</button>
                 </li>
