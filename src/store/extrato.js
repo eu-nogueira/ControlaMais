@@ -25,7 +25,7 @@ const extrato = createSlice({
     },
         removerConta: {
           reducer(state, action) {
-            const remove = state.contasExtrato.filter((contas) => contas.descricao !== action.payload.descricao)
+            const remove = state.contasExtrato.filter((conta) => conta.id !== action.payload.id)
             state.contasExtrato = remove
             if(action.payload.tipoConta === 'Receita') {
                 state.saldoTotal -= action.payload.valorFormatado

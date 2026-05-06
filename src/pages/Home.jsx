@@ -16,9 +16,10 @@ function Home() {
     const dataCadastro = new Intl.DateTimeFormat(
       'pt-BR'
     ).format(data)
+    const id = crypto.randomUUID()
     const valorFormatado = +valor.replace(',', '.')
     if(valorFormatado > 0 && descricao) {
-    dispatch(adicionarConta({ descricao, dataCadastro, valorFormatado, tipoConta }))
+    dispatch(adicionarConta({ id, descricao, dataCadastro, valorFormatado, tipoConta }))
     }
     setValor('')
     setDescricao('')
