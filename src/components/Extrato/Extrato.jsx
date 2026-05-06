@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 import './Extrato.css'
+import { MdDelete } from 'react-icons/md'
 import { removerConta } from '../../store/extrato'
 
 function Extrato() {
@@ -13,18 +14,33 @@ function Extrato() {
   return (
     <div className='extrato'>
         <h1>Extrato</h1>
-        <ul>
+          <table>
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
           {contas?.length > 0 ?
               contas.map((conta, index) => (
-                <li key={index} className={conta.tipoConta === 'Despesa' ? 'despesa' : 'receita'}>
-                  {conta.tipoConta} {conta.dataCadastro} - {conta.descricao} - R$ {conta.valorFormatado.toFixed(2).replace('.', ',')}
-                  <button className='btn-delete' onClick={() => handleDelete(conta)}>Excluir</button>
-                </li>
+                      <tr key={index} className={conta.tipoConta === 'Despesa' ? 'despesa' : 'receita'}>
+                        <td>{conta.tipoConta}</td>
+                        <td>{conta.dataCadastro}</td>
+                        <td>{conta.descricao}</td>
+                        <td>R${conta.valorFormatado.toFixed(2).replace('.', ',')}</td>
+                        <td><button className='btn-delete' onClick={() => handleDelete(conta)}>< MdDelete/></button></td>
+                      </tr>
               ))
-            : 
-              <h3>Ainda não há registros aqui.</h3>
-          }
-        </ul>
+              : 
+              <tr colSpan = "5">
+                <td><h3>Ainda não há registros aqui.</h3></td>
+              </tr>
+            }
+            </tbody>
+          </table>
     </div>
   )
 }

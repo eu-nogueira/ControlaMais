@@ -5,19 +5,6 @@
     text-align: center;
 }
 
-.extrato ul {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-}
-
-.extrato li {
-    display: flex;
-    justify-content: space-between;
-    width: 70%;
-    margin: .5rem auto;
-}
-
 .btn-delete {
     padding: 5px;
     height: 50%;
@@ -32,6 +19,19 @@
     color: #ef4444;
 }
 
+.extrato table {
+    margin: auto;
+}
+
+.extrato th {
+    border-bottom: 1px solid white;
+    padding: .5rem 1rem;
+}
+
+.extrato td {
+    padding: 1rem .5rem;
+}
+
 @media screen and (max-width: 768px) {
     .extrato {
         margin: auto;
@@ -44,20 +44,19 @@
         box-shadow: 1px 2px 2px 2px rgba(72, 255, 0, 0.3);
     }
     
-    .extrato ul {
+    .extrato table {
         width: 100%;
         text-align: center;
         padding: 0;
     }
-    
-    .extrato li {
-        padding: .5rem 0;
-        border-bottom: 1px solid #1d3f1e;
-        width: 90%;
-    }
 
-    .btn-delete {
-        margin-left: 1rem;
+    .extrato th {
+        border-bottom: 1px solid #356936;
+    }
+    
+    .extrato td {
+        padding: .5rem 0;
+        width: 80%;
     }
 
     .receita {
