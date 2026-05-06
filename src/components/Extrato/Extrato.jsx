@@ -14,6 +14,7 @@ function Extrato() {
   return (
     <div className='extrato'>
         <h1>Extrato</h1>
+          {contas?.length > 0 ? (
           <table>
               <thead>
                 <tr>
@@ -24,8 +25,7 @@ function Extrato() {
                 </tr>
               </thead>
               <tbody>
-          {contas?.length > 0 ?
-              contas.map((conta, index) => (
+              {contas.map((conta, index) => (
                       <tr key={index} className={conta.tipoConta === 'Despesa' ? 'despesa' : 'receita'}>
                         <td>{conta.tipoConta}</td>
                         <td>{conta.dataCadastro}</td>
@@ -33,14 +33,18 @@ function Extrato() {
                         <td>R${conta.valorFormatado.toFixed(2).replace('.', ',')}</td>
                         <td><button className='btn-delete' onClick={() => handleDelete(conta)}>< MdDelete/></button></td>
                       </tr>
-              ))
-              : 
-              <tr colSpan = "5">
-                <td><h3>Ainda não há registros aqui.</h3></td>
-              </tr>
-            }
-            </tbody>
-          </table>
+              ))}
+                </tbody>
+                </table>
+            )  : (
+              <table>
+                <tbody>
+                  <tr colSpan = "5">
+                    <td><h3>Ainda não há registros aqui.</h3></td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
     </div>
   )
 }
