@@ -22,11 +22,8 @@
 }
 
 .modalContas table {
-    width: 70%;
+    max-width: 70%;
     text-align: center;
     margin: auto;
 }
 
-.modalContas td {
-    padding: .5rem;
-}

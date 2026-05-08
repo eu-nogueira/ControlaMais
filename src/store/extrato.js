@@ -36,9 +36,18 @@ const extrato = createSlice({
          }, prepare(payload) {
               return toLocalStorage(payload)
          }
+        },
+        aumentaParcela: {
+            reducer(state, action) {
+            const contaSelecionada = state.contasExtrato.find((conta) => conta.id === action.payload.id)
+            console.log(action.payload)
+            contaSelecionada.parcelaPaga = action.payload.parcelaPaga
+            }, prepare(payload) {
+                return toLocalStorage(payload)
+            }
         }
     }
 })
 
-export const { adicionarConta, removerConta } = extrato.actions
+export const { adicionarConta, removerConta, aumentaParcela } = extrato.actions
 export default extrato.reducer
