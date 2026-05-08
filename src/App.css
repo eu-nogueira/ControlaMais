@@ -3,6 +3,6 @@ Body {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
-    background-color: rgb(3, 22, 0);
+    background: linear-gradient(to right, rgb(37, 126, 23), rgb(3, 22, 0));
     font-family: monospace;
 }
