@@ -42,6 +42,10 @@
     border-radius: 50%;
 }
 
+.insert label {
+    color: white;
+}
+
 @media screen and (max-width: 768px) {
     .pageHome {
         flex-direction: column;
@@ -53,11 +57,12 @@
         justify-content: center;
     }
 
-    .selecaoDespesaReceita, .insert input {
+    .selecaoDespesaReceita, .insert .infosAdicionais {
         width: 90%;
         height: 50px;
         font-size: 13pt;
     }
+
 
     .insert button {
         width: 90%;

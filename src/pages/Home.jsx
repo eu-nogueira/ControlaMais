@@ -12,6 +12,7 @@ function Home() {
   const [parcela, setParcela] = useState('')
   const [responsavel, setResponsavel] = useState('')
   const [dataVencimento, setDataVencimento] = useState('')
+  const [selected, setSelected] = useState(false)
   const dispatch = useDispatch()
 
   function handleAdicao() {
@@ -30,7 +31,8 @@ function Home() {
       tipoConta,
       responsavel,
       parcela,
-      dataVencimento
+      dataVencimento,
+      selected
     }))
     }
     setValor('')
@@ -52,13 +54,15 @@ function Home() {
             <option value="Despesa">Despesa</option>
           </select>
           <p className='info' title='Escolha se deseja cadastrar uma receita ou uma despesa'>i</p>
-          <input type="text" name="" id="" placeholder='Descrição' value={descricao} onChange={(e) => setDescricao(e.target.value)}/>
-          <input type="text" name="" id="" placeholder='Valor R$' value={valor} onChange={(e) => setValor(e.target.value)}/>
+          <input type="text" className='infosAdicionais' placeholder='Descrição' value={descricao} onChange={(e) => setDescricao(e.target.value)}/>
+          <input type="text" className='infosAdicionais' placeholder='Valor R$' value={valor} onChange={(e) => setValor(e.target.value)}/>
           {tipoConta === 'Despesa' &&
             <>
-              <input type="Number" name="" id="" placeholder='Parcelas' value={parcela} onChange={(e) => setParcela(e.target.value)}/>
-              <input type="date" name="" id="" value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)}/>
-              <input type="text" name="" id="" placeholder='Responsável' value={responsavel} onChange={(e) => setResponsavel(e.target.value)}/>
+              <input type="Number" className='infosAdicionais' placeholder='Parcelas' value={parcela} onChange={(e) => setParcela(e.target.value)}/>
+              <input type="date" className='infosAdicionais' value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)}/>
+              <input type="text" className='infosAdicionais' placeholder='Responsável' value={responsavel} onChange={(e) => setResponsavel(e.target.value)}/>
+              <label>Deseja adicionar este valor nas suas despesas?</label>
+              <input type="checkbox" className='selecione' value={selected} onClick={() => setSelected(!selected)}/>
             </>
           }
           <button className='btn' disabled={!descricao || 

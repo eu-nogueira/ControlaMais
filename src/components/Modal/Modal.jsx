@@ -34,7 +34,6 @@ function handleParcela(parcela, index, id) {
         <table>
             <thead>
                 <tr>
-                    <th>Tipo conta</th>
                     <th>Data vencimento</th>
                     <th>Parcelas</th>
                     <th>Responsável</th>
@@ -44,7 +43,6 @@ function handleParcela(parcela, index, id) {
             <tbody>
                 {contas.map((conta, index) => (
                     <tr key={index} className={conta.tipoConta === 'Despesa' ? 'despesa' : 'receita'}>
-                    <td>{conta.tipoConta}</td>
                     <td>{conta.dataVencimento}</td>
                     <td onClick={() => handleParcela(conta.parcela, index, conta.id)}>
                         {conta.tipoConta === 'Despesa' && `${conta.parcelaPaga || 0}/`}
