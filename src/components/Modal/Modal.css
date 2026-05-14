@@ -3,13 +3,13 @@
     position: absolute;
     background-color: white;
     width: 90%;
-    height: 40vh;
+    max-height: 40vh;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
     border-radius: .5rem;
-    overflow-y: hidden;
+    overflow: auto;
 }
 
 .modalContasOverlay {
