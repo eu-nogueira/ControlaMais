@@ -9,6 +9,13 @@
     transform: translate(-50%, -50%);
     text-align: center;
     border-radius: .5rem;
+    overflow-y: hidden;
+}
+
+.modalContasOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .btnCloseModal {
@@ -16,8 +23,8 @@
     border: none;
     padding: 5px;
     border-radius: 3px;
-    position: relative;
-    left: 47%;
+    position: sticky;
+    left: 100%;
     cursor: pointer;
 }
 
@@ -25,5 +32,21 @@
     max-width: 70%;
     text-align: center;
     margin: auto;
+    padding: 0 1rem;
 }
 
+.modalContas th, .modalContas td {
+    padding: .5rem;
+}
+
+@media screen and (max-width: 768px) {
+ 
+    .modalContas table {
+        padding: 0 1rem;
+    }
+
+    .btnCloseModal {
+        left: 95%;
+    }
+    
+}
