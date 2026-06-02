@@ -4,6 +4,7 @@ import Extrato from '../components/Extrato/Extrato'
 import { useDispatch } from 'react-redux'
 import { useState } from 'react'
 import { adicionarConta } from '../store/extrato'
+import Total from '../components/Total/Total'
 
 function Home() {
   const [descricao, setDescricao] = useState('')
@@ -15,6 +16,7 @@ function Home() {
   const [usaDataCadastro, setUsaDataCadastro] = useState(false)
   const [cadastroData, setCadastroData] = useState('')
   const [selected, setSelected] = useState(false)
+  const [anotarPara, setAnotarPara] = useState('')
   const dispatch = useDispatch()
 
   function handleAdicao() {
@@ -45,7 +47,8 @@ function Home() {
       responsavel,
       parcela,
       dataVencimento,
-      selected
+      selected,
+      anotarPara
     }))
     }
     setValor('')
@@ -55,6 +58,7 @@ function Home() {
     setResponsavel('')
     setCadastroData('')
     setUsaDataCadastro(false)
+    setAnotarPara('')
   }
 
   return (
@@ -88,6 +92,7 @@ function Home() {
               </>
               }
               <input type="text" className='infosAdicionais' placeholder='Responsável' value={responsavel} onChange={(e) => setResponsavel(e.target.value)}/>
+              <input type="text" className='infosAdicionais' placeholder='Anotar para' value={anotarPara} onChange={(e) => setAnotarPara(e.target.value)}/>
               <label>Deseja adicionar este valor nas suas despesas?</label>
               <input type="checkbox" className='selecione' value={selected} onClick={() => setSelected(!selected)}/>
             </>
@@ -97,6 +102,9 @@ function Home() {
           tipoConta === 'Despesa' && !parcela || 
           tipoConta === 'Despesa' && !responsavel}
            onClick={() => handleAdicao()}>Inserir</button>
+      </div>
+      <div className="total">
+        < Total />
       </div>
     </>
   )
