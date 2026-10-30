@@ -1,3 +1,40 @@
+.extrato-meses {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .75rem;
+    padding: .375rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+.extrato-meses strong {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.extrato-meses button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--cor-primaria);
+}
+
+.extrato-meses button:hover:not(:disabled) {
+    background: var(--cor-primaria-suave);
+}
+
+.extrato-meses button:disabled {
+    color: var(--cor-texto-suave);
+    opacity: .35;
+}
+
 .extrato-filtros {
     display: flex;
     gap: .5rem;

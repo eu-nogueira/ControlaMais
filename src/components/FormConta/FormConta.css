@@ -222,6 +222,33 @@
     color: var(--cor-primaria);
 }
 
+.form-checkbox {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: .625rem;
+    row-gap: .125rem;
+    cursor: pointer;
+}
+
+.form-checkbox input {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: var(--cor-primaria);
+}
+
+.form-checkbox span {
+    font-size: .9375rem;
+    font-weight: 500;
+}
+
+.form-checkbox small {
+    grid-column: 2;
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
 .form-resumo {
     padding: .75rem .875rem;
     border-left: 3px solid var(--cor-primaria);

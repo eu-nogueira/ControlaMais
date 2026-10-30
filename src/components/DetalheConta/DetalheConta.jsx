@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { MdCheck, MdDeleteOutline } from 'react-icons/md'
-import { aumentaParcela, removerConta } from '../../store/extrato'
+import { alterarParcelaPaga, removerConta } from '../../store/extrato'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
 import './DetalheConta.css'
 
@@ -19,7 +19,7 @@ function DetalheConta({ id, ocultar, onFechar }) {
 
   function handleParcela() {
     if (parcelasPagas < totalParcelas) {
-      dispatch(aumentaParcela({
+      dispatch(alterarParcelaPaga({
         id: conta.id,
         parcelaPaga: parcelasPagas + 1
       }))
@@ -40,7 +40,7 @@ function DetalheConta({ id, ocultar, onFechar }) {
     despesa && { rotulo: 'Vencimento', valor: formatarDataISO(conta.dataVencimento) || 'Não informado' },
     despesa && { rotulo: 'Quem paga', valor: conta.selected ? 'Eu (sai do meu saldo)' : conta.responsavel || 'Outra pessoa' },
     despesa && conta.selected && conta.anotarPara && { rotulo: 'Vou pagar para', valor: conta.anotarPara },
-    despesa && !conta.selected && conta.anotarPara && { rotulo: 'Compra em nome de', valor: conta.anotarPara },
+    despesa && (conta.cartao || !conta.selected) && { rotulo: 'Pagamento', valor: conta.cartao ? `Cartão ${conta.cartao}` : 'Pix' },
   ].filter(Boolean)
 
   return (

@@ -21,6 +21,8 @@ function App() {
 
   const usuarioId = sessao?.user.id
   const nomeUsuario = sessao?.user.user_metadata?.nome || sessao?.user.email?.split('@')[0]
+  const ehLarissa = /larissa/i.test(`${sessao?.user.user_metadata?.nome ?? ''} ${sessao?.user.email ?? ''}`)
+  const saudacao = ehLarissa ? 'Olá, minha vida!' : `Olá, ${nomeUsuario}`
 
   useEffect(() => {
     if (usuarioId) {
@@ -36,7 +38,7 @@ function App() {
 
   return (
     <Provider store={store}>
-      {sessao ? <Home nomeUsuario={nomeUsuario} /> : <Login />}
+      {sessao ? <Home saudacao={saudacao} /> : <Login />}
     </Provider>
   )
 }

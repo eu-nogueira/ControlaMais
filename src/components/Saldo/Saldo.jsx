@@ -1,19 +1,41 @@
-import { useSelector } from 'react-redux'
-import { MdArrowDownward, MdArrowUpward } from 'react-icons/md'
+import { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { MdArrowDownward, MdArrowUpward, MdTaskAlt } from 'react-icons/md'
+import { quitarMesesAnteriores } from '../../store/extrato'
 import { formatarMoeda } from '../../utils/formatar'
+import { formatarMes } from '../../utils/mes'
+import { calcularPeriodo, mesesParaFechar, simularFechamento } from '../../utils/saldo'
+import useMesAtual from '../../hooks/useMesAtual'
 import './Saldo.css'
 
 function Saldo({ ocultar }) {
     const contas = useSelector((state) => state.extrato.contasExtrato)
-    const receitaMes = contas
-        .filter((conta) => conta.tipoConta === 'Receita')
-        .reduce((total, conta) => total + conta.valorFormatado, 0)
-    const despesaMes = contas
-        .filter((conta) => conta.tipoConta === 'Despesa' && conta.selected)
-        .reduce((total, conta) => total + conta.valorFormatado, 0)
-    const saldo = receitaMes - despesaMes
+    const fechamento = useSelector((state) => state.extrato.fechamento)
+    const [confirmarQuitacao, setConfirmarQuitacao] = useState(false)
+    const [quitando, setQuitando] = useState(false)
+    const mesAtual = useMesAtual()
+    const dispatch = useDispatch()
+
+    const { saldoInicial, receitas: receitaMes, despesas: despesaMes, saldo } = calcularPeriodo(contas, fechamento)
     const porcentagemComprometimento = receitaMes > 0 ? (despesaMes / receitaMes) * 100 : 0
     const larguraBarra = Math.min(porcentagemComprometimento, 100)
+
+    const mesesAbertos = mesesParaFechar(contas, fechamento, mesAtual)
+    const sobra = mesesAbertos.length > 0
+        ? simularFechamento(contas, fechamento, mesesAbertos).fechamentos.at(-1).saldo
+        : 0
+    const nomeMeses = mesesAbertos.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()).join(', ')
+
+    async function handleQuitar() {
+        if (!confirmarQuitacao) {
+            setConfirmarQuitacao(true)
+            return
+        }
+        setQuitando(true)
+        await dispatch(quitarMesesAnteriores(mesAtual))
+        setQuitando(false)
+        setConfirmarQuitacao(false)
+    }
 
   return (
     <section className='saldo' aria-label='Resumo do saldo'>
@@ -21,6 +43,9 @@ function Saldo({ ocultar }) {
         <p className={`saldo-valor ${saldo < 0 ? 'saldo-valor-negativo' : ''}`}>
             {formatarMoeda(saldo, ocultar)}
         </p>
+        {saldoInicial !== 0 && (
+            <p className='saldo-sobra'>Inclui {formatarMoeda(saldoInicial, ocultar)} que sobraram de {formatarMes(fechamento.mes).toLowerCase()}</p>
+        )}
 
         <div className='saldo-mes'>
             <div className='saldo-mes-item'>
@@ -58,6 +83,23 @@ function Saldo({ ocultar }) {
                 />
             </div>
         </div>
+
+        {mesesAbertos.length > 0 && (
+            <div className='saldo-quitar'>
+                <button
+                    className={`saldo-quitar-botao ${confirmarQuitacao ? 'saldo-quitar-confirmar' : ''}`}
+                    onClick={handleQuitar}
+                    onBlur={() => !quitando && setConfirmarQuitacao(false)}
+                    disabled={quitando}
+                >
+                    <MdTaskAlt size={20} />
+                    {quitando ? 'Quitando...' : confirmarQuitacao ? 'Toque novamente para confirmar' : 'Contas do mês passado quitadas'}
+                </button>
+                <p>
+                    Fecha {nomeMeses}: leva {formatarMoeda(sobra, ocultar)} de sobra para este mês e registra a parcela paga nos parcelamentos que você paga.
+                </p>
+            </div>
+        )}
     </section>
   )
 }

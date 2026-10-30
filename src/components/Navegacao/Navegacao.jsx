@@ -1,9 +1,10 @@
-import { MdAdd, MdHome, MdPeopleAlt, MdReceiptLong } from 'react-icons/md'
+import { MdAdd, MdCreditCard, MdHome, MdPeopleAlt, MdReceiptLong } from 'react-icons/md'
 import './Navegacao.css'
 
 const ABAS = [
   { valor: 'inicio', rotulo: 'Início', icone: <MdHome size={24} /> },
   { valor: 'extrato', rotulo: 'Extrato', icone: <MdReceiptLong size={24} /> },
+  { valor: 'parcelas', rotulo: 'Parcelas', icone: <MdCreditCard size={24} /> },
   { valor: 'valores', rotulo: 'Valores', icone: <MdPeopleAlt size={24} /> },
 ]
 

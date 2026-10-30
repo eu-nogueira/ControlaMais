@@ -43,7 +43,9 @@ function Total({ ocultar }) {
       .filter(
         (conta) =>
           conta.tipoConta === "Despesa" &&
-          conta.anotarPara
+          (conta.selected
+            ? conta.anotarPara
+            : conta.responsavel)
       )
       .forEach((conta) => {
         const valor = Number(

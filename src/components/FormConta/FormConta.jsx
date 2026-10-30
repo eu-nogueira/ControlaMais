@@ -21,6 +21,8 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
   const [cadastroData, setCadastroData] = useState(hojeISO)
   const [selected, setSelected] = useState(true)
   const [anotarPara, setAnotarPara] = useState('')
+  const [ehCartao, setEhCartao] = useState(false)
+  const [cartao, setCartao] = useState('')
   const [salvando, setSalvando] = useState(false)
   const dispatch = useDispatch()
 
@@ -33,7 +35,7 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
     !descricao.trim() && 'descrição',
     despesa && totalParcelas < 1 && 'parcelas',
     despesa && !selected && !responsavel.trim() && 'quem vai te pagar',
-    despesa && !selected && !anotarPara.trim() && 'em nome de quem foi a compra',
+    despesa && ehCartao && !cartao.trim() && 'cartão usado',
   ].filter(Boolean)
 
   function alterarParcela(quantidade) {
@@ -41,6 +43,8 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
   }
 
   function resumoDespesa() {
+    if (totalParcelas > 1) return resumoParcelado()
+
     const valorTexto = valorFormatado > 0 ? formatarMoeda(valorFormatado) : 'O valor'
 
     if (selected) {
@@ -52,6 +56,22 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
     return responsavel.trim()
       ? `Seu saldo não muda. ${valorTexto} ficará em "A receber" de ${responsavel.trim()}.`
       : 'Seu saldo não muda. O valor ficará em "A receber" da pessoa que vai te pagar.'
+  }
+
+  function resumoParcelado() {
+    const parcelaTexto = valorFormatado > 0 ? `A parcela de ${formatarMoeda(valorFormatado)}` : 'A parcela'
+    const totalTexto = valorFormatado > 0 ? ` (total de ${formatarMoeda(valorFormatado * totalParcelas)})` : ''
+    const acompanhamento = `Acompanhe as ${totalParcelas} parcelas${totalTexto} na aba Parcelas.`
+
+    if (selected) {
+      return anotarPara.trim()
+        ? `${parcelaTexto} será descontada do seu saldo e ficará em "A pagar" para ${anotarPara.trim()}. ${acompanhamento}`
+        : `${parcelaTexto} será descontada do seu saldo e somada às despesas do mês. ${acompanhamento}`
+    }
+
+    return responsavel.trim()
+      ? `Seu saldo não muda. ${parcelaTexto} ficará em "A receber" de ${responsavel.trim()}. ${acompanhamento}`
+      : `Seu saldo não muda. ${parcelaTexto} ficará em "A receber" da pessoa que vai te pagar. ${acompanhamento}`
   }
 
   async function handleAdicao(event) {
@@ -69,7 +89,8 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
         parcela: despesa ? parcela : '',
         dataVencimento: despesa ? dataVencimento : '',
         selected: despesa && selected,
-        anotarPara: despesa ? anotarPara.trim() : ''
+        anotarPara: despesa && selected ? anotarPara.trim() : '',
+        cartao: despesa && ehCartao ? cartao.trim() : ''
       })).unwrap()
       onConcluir()
     } catch {
@@ -95,7 +116,7 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
       </div>
 
       <label className='form-valor'>
-        <span>{despesa ? 'Quanto foi gasto?' : 'Quanto você recebeu?'}</span>
+        <span>{!despesa ? 'Quanto você recebeu?' : totalParcelas > 1 ? 'Qual o valor de cada parcela?' : 'Quanto foi gasto?'}</span>
         <div className='form-valor-campo'>
           <span aria-hidden='true'>R$</span>
           <input
@@ -139,7 +160,11 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
                     <MdAdd size={20} />
                   </button>
                 </div>
-                <small>{totalParcelas <= 1 ? 'À vista' : `Em ${totalParcelas} vezes`}</small>
+                <small>
+                  {totalParcelas <= 1
+                    ? 'À vista'
+                    : `Em ${totalParcelas} vezes${valorFormatado > 0 ? ` · total ${formatarMoeda(valorFormatado * totalParcelas)}` : ''}`}
+                </small>
               </div>
 
               <label className='form-campo'>
@@ -184,17 +209,22 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
                 <small>Use quando a compra foi feita no cartão ou no nome de outra pessoa.</small>
               </label>
             ) : (
-              <>
-                <label className='form-campo'>
-                  <span>Quem vai te pagar?</span>
-                  <input type='text' placeholder='Ex.: João' value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />
-                </label>
-                <label className='form-campo'>
-                  <span>Em nome de quem foi a compra?</span>
-                  <input type='text' placeholder='Ex.: seu nome ou o cartão usado' value={anotarPara} onChange={(e) => setAnotarPara(e.target.value)} />
-                  <small>Cartão, conta ou caderneta em que a compra foi anotada.</small>
-                </label>
-              </>
+              <label className='form-campo'>
+                <span>Quem vai te pagar?</span>
+                <input type='text' placeholder='Ex.: João' value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />
+              </label>
+            )}
+
+            <label className='form-checkbox'>
+              <input type='checkbox' checked={ehCartao} onChange={(e) => setEhCartao(e.target.checked)} />
+              <span>É cartão?</span>
+              <small>{ehCartao ? 'Informe o cartão usado na compra.' : 'Desmarcado, o pagamento fica registrado como Pix.'}</small>
+            </label>
+            {ehCartao && (
+              <label className='form-campo'>
+                <span>Qual cartão foi usado?</span>
+                <input type='text' placeholder='Ex.: Nubank, Itaú' value={cartao} onChange={(e) => setCartao(e.target.value)} />
+              </label>
             )}
 
             <p className='form-resumo' aria-live='polite'>{resumoDespesa()}</p>

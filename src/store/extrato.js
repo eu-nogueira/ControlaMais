@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import supabase from "../services/supabase";
+import { mesesParaFechar, simularFechamento } from "../utils/saldo";
 
 function paraConta(linha) {
     return {
@@ -13,7 +14,8 @@ function paraConta(linha) {
         parcelaPaga: linha.parcela_paga,
         dataVencimento: linha.data_vencimento ?? '',
         selected: linha.selected,
-        anotarPara: linha.anotar_para
+        anotarPara: linha.anotar_para,
+        cartao: linha.cartao ?? ''
     }
 }
 
@@ -27,18 +29,57 @@ function paraLinha(conta) {
         parcela: Number(conta.parcela) || null,
         data_vencimento: conta.dataVencimento || null,
         selected: conta.selected,
-        anotar_para: conta.anotarPara
+        anotar_para: conta.anotarPara,
+        cartao: conta.cartao
     }
 }
 
 export const carregarContas = createAsyncThunk('extrato/carregarContas', async () => {
-    const { data, error } = await supabase
+    const [contas, fechamento] = await Promise.all([
+        supabase
+            .from('contas')
+            .select('*')
+            .order('data_cadastro')
+            .order('criado_em'),
+        supabase
+            .from('fechamentos')
+            .select('mes, saldo')
+            .order('mes', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+    ])
+    if (contas.error) throw contas.error
+    if (fechamento.error) throw fechamento.error
+    return {
+        contas: contas.data.map(paraConta),
+        fechamento: fechamento.data && { mes: fechamento.data.mes, saldo: Number(fechamento.data.saldo) }
+    }
+})
+
+export const quitarMesesAnteriores = createAsyncThunk('extrato/quitarMesesAnteriores', async (mesAtual, { getState, dispatch }) => {
+    const { contasExtrato, fechamento } = getState().extrato
+    const meses = mesesParaFechar(contasExtrato, fechamento, mesAtual)
+    const { fechamentos, alteradas } = simularFechamento(contasExtrato, fechamento, meses)
+
+    const { error } = await supabase
+        .from('fechamentos')
+        .insert(fechamentos)
+    if (error) {
+        dispatch(carregarContas())
+        if (error.code === '23505') throw new Error('Este mês já foi fechado em outro aparelho. Os dados foram atualizados.')
+        throw error
+    }
+
+    const resultados = await Promise.all(alteradas.map((conta) => supabase
         .from('contas')
-        .select('*')
-        .order('data_cadastro')
-        .order('criado_em')
-    if (error) throw error
-    return data.map(paraConta)
+        .update({ parcela_paga: conta.parcelaPaga })
+        .eq('id', conta.id)))
+    if (resultados.some((resultado) => resultado.error)) {
+        dispatch(carregarContas())
+        throw new Error('O mês foi fechado, mas algumas parcelas não foram atualizadas. Confira na aba Parcelas.')
+    }
+
+    return { fechamento: fechamentos[fechamentos.length - 1], alteradas }
 })
 
 export const adicionarConta = createAsyncThunk('extrato/adicionarConta', async (conta) => {
@@ -60,7 +101,7 @@ export const removerConta = createAsyncThunk('extrato/removerConta', async (cont
     return conta.id
 })
 
-export const aumentaParcela = createAsyncThunk('extrato/aumentaParcela', async ({ id, parcelaPaga }) => {
+export const alterarParcelaPaga = createAsyncThunk('extrato/alterarParcelaPaga', async ({ id, parcelaPaga }) => {
     const { error } = await supabase
         .from('contas')
         .update({ parcela_paga: parcelaPaga })
@@ -71,6 +112,7 @@ export const aumentaParcela = createAsyncThunk('extrato/aumentaParcela', async (
 
 const estadoInicial = {
     contasExtrato: [],
+    fechamento: null,
     carregando: false,
     erro: null
 }
@@ -99,7 +141,15 @@ const extrato = createSlice({
             })
             .addCase(carregarContas.fulfilled, (state, action) => {
                 state.carregando = false
-                state.contasExtrato = action.payload
+                state.contasExtrato = action.payload.contas
+                state.fechamento = action.payload.fechamento
+            })
+            .addCase(quitarMesesAnteriores.fulfilled, (state, action) => {
+                state.fechamento = action.payload.fechamento
+                action.payload.alteradas.forEach(({ id, parcelaPaga }) => {
+                    const conta = state.contasExtrato.find((item) => item.id === id)
+                    if (conta) conta.parcelaPaga = parcelaPaga
+                })
             })
             .addCase(adicionarConta.fulfilled, (state, action) => {
                 state.contasExtrato.push(action.payload)
@@ -108,7 +158,7 @@ const extrato = createSlice({
             .addCase(removerConta.fulfilled, (state, action) => {
                 state.contasExtrato = state.contasExtrato.filter((conta) => conta.id !== action.payload)
             })
-            .addCase(aumentaParcela.fulfilled, (state, action) => {
+            .addCase(alterarParcelaPaga.fulfilled, (state, action) => {
                 const contaSelecionada = state.contasExtrato.find((conta) => conta.id === action.payload.id)
                 if (contaSelecionada) contaSelecionada.parcelaPaga = action.payload.parcelaPaga
             })

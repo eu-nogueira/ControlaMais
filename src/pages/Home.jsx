@@ -6,6 +6,7 @@ import Cabecalho from '../components/Cabecalho/Cabecalho'
 import Saldo from '../components/Saldo/Saldo'
 import Extrato from '../components/Extrato/Extrato'
 import Total from '../components/Total/Total'
+import Parcelamentos from '../components/Parcelamentos/Parcelamentos'
 import Navegacao from '../components/Navegacao/Navegacao'
 import Modal from '../components/Modal/Modal'
 import FormConta from '../components/FormConta/FormConta'
@@ -16,10 +17,11 @@ import supabase from '../services/supabase'
 const TITULOS = {
   inicio: 'Início',
   extrato: 'Extrato',
+  parcelas: 'Parcelamentos',
   valores: 'Valores por pessoa',
 }
 
-function Home({ nomeUsuario }) {
+function Home({ saudacao }) {
   const [aba, setAba] = useState('inicio')
   const [ocultarValores, setOcultarValores] = useState(false)
   const [novaConta, setNovaConta] = useState(null)
@@ -50,7 +52,7 @@ function Home({ nomeUsuario }) {
       <main className='app-conteudo'>
         <Cabecalho
           titulo={TITULOS[aba]}
-          nomeUsuario={nomeUsuario}
+          saudacao={saudacao}
           ocultar={ocultarValores}
           onAlternarOcultar={() => setOcultarValores(!ocultarValores)}
           onSair={() => supabase.auth.signOut()}
@@ -94,6 +96,8 @@ function Home({ nomeUsuario }) {
           {!carregando && aba === 'extrato' && (
             <Extrato ocultar={ocultarValores} comFiltro onSelecionar={setContaSelecionada} />
           )}
+
+          {!carregando && aba === 'parcelas' && <Parcelamentos ocultar={ocultarValores} />}
 
           {!carregando && aba === 'valores' && <Total ocultar={ocultarValores} />}
         </div>
