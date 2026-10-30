@@ -1,0 +1,11 @@
+{
+  "appId": "br.com.versotech.controlamais",
+  "appName": "Controla+",
+  "webDir": "dist",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}
