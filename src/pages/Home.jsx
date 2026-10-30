@@ -1,112 +1,99 @@
 import './Home.css'
+import { useCallback, useState } from 'react'
+import { MdAdd, MdChevronRight, MdPeopleAlt, MdReceiptLong, MdRemove } from 'react-icons/md'
+import Cabecalho from '../components/Cabecalho/Cabecalho'
 import Saldo from '../components/Saldo/Saldo'
 import Extrato from '../components/Extrato/Extrato'
-import { useDispatch } from 'react-redux'
-import { useState } from 'react'
-import { adicionarConta } from '../store/extrato'
 import Total from '../components/Total/Total'
+import Navegacao from '../components/Navegacao/Navegacao'
+import Modal from '../components/Modal/Modal'
+import FormConta from '../components/FormConta/FormConta'
+import DetalheConta from '../components/DetalheConta/DetalheConta'
+
+const TITULOS = {
+  inicio: 'Início',
+  extrato: 'Extrato',
+  valores: 'Valores por pessoa',
+}
 
 function Home() {
-  const [descricao, setDescricao] = useState('')
-  const [valor, setValor] = useState('')
-  const [tipoConta, setTipoConta] = useState('Receita')
-  const [parcela, setParcela] = useState('')
-  const [responsavel, setResponsavel] = useState('')
-  const [dataVencimento, setDataVencimento] = useState('')
-  const [usaDataCadastro, setUsaDataCadastro] = useState(false)
-  const [cadastroData, setCadastroData] = useState('')
-  const [selected, setSelected] = useState(false)
-  const [anotarPara, setAnotarPara] = useState('')
-  const dispatch = useDispatch()
+  const [aba, setAba] = useState('inicio')
+  const [ocultarValores, setOcultarValores] = useState(false)
+  const [novaConta, setNovaConta] = useState(null)
+  const [contaSelecionada, setContaSelecionada] = useState(null)
 
-  function handleAdicao() {
-    let dataCadastro;
+  const fecharNovaConta = useCallback(() => setNovaConta(null), [])
+  const fecharDetalhe = useCallback(() => setContaSelecionada(null), [])
 
-    if(usaDataCadastro) {
-      const data = new Date(cadastroData)
-       dataCadastro = new Intl.DateTimeFormat(
-      'pt-BR'
-    ).format(data)
-
-    } else {
-
-    const data = new Date()
-       dataCadastro = new Intl.DateTimeFormat(
-      'pt-BR'
-    ).format(data)
-    }
-    const id = crypto.randomUUID()
-    const valorFormatado = +valor.replace(',', '.')
-    if(valorFormatado > 0 && descricao) {
-    dispatch(adicionarConta({ 
-      id, 
-      descricao, 
-      dataCadastro, 
-      valorFormatado, 
-      tipoConta,
-      responsavel,
-      parcela,
-      dataVencimento,
-      selected,
-      anotarPara
-    }))
-    }
-    setValor('')
-    setDescricao('')
-    setParcela('')
-    setDataVencimento('')
-    setResponsavel('')
-    setCadastroData('')
-    setUsaDataCadastro(false)
-    setAnotarPara('')
+  function alterarAba(novaAba) {
+    setAba(novaAba)
+    window.scrollTo({ top: 0 })
   }
 
+  const acoesRapidas = [
+    { rotulo: 'Receita', icone: <MdAdd size={24} />, acao: () => setNovaConta('Receita') },
+    { rotulo: 'Despesa', icone: <MdRemove size={24} />, acao: () => setNovaConta('Despesa') },
+    { rotulo: 'Extrato', icone: <MdReceiptLong size={24} />, acao: () => alterarAba('extrato') },
+    { rotulo: 'Valores', icone: <MdPeopleAlt size={24} />, acao: () => alterarAba('valores') },
+  ]
+
   return (
-    <>
-      <div className='pageHome'>
-        < Saldo />
-        < Extrato />
-      </div>
-        <div className="insert">
-          <select name="selecaoDespesaReceita" className='selecaoDespesaReceita' onChange={(e) => setTipoConta(e.target.value)}>
-            <option value="Receita" selected>Receita</option>
-            <option value="Despesa">Despesa</option>
-          </select>
-          <p className='info' title='Escolha se deseja cadastrar uma receita ou uma despesa'>i</p>
-          <input type="text" className='infosAdicionais' placeholder='Descrição' value={descricao} onChange={(e) => setDescricao(e.target.value)}/>
-          <input type="text" className='infosAdicionais' placeholder='Valor R$' value={valor} onChange={(e) => setValor(e.target.value)}/>
-          {tipoConta === 'Despesa' &&
+    <div className='app'>
+      <Navegacao aba={aba} onAlterarAba={alterarAba} onNovaConta={setNovaConta} />
+
+      <main className='app-conteudo'>
+        <Cabecalho
+          titulo={TITULOS[aba]}
+          ocultar={ocultarValores}
+          onAlternarOcultar={() => setOcultarValores(!ocultarValores)}
+        >
+          {aba === 'inicio' && <Saldo ocultar={ocultarValores} />}
+        </Cabecalho>
+
+        <div className='pagina'>
+          {aba === 'inicio' && (
             <>
-              <input type="Number" className='infosAdicionais' placeholder='Parcelas' value={parcela} onChange={(e) => setParcela(e.target.value)}/>
-              <label> Data de vencimento</label>
-              <input type="date" className='infosAdicionais' value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)}/>
-              {usaDataCadastro ?
-              <>
-                <label>Data de cadastro:</label>
-                <input type="date" className='infosAdicionais' value={cadastroData} onChange={(e) => setCadastroData(e.target.value)}/> 
-              </>
-              :
-              <>
-                <label>Deseja alterar a data de cadastro?</label>
-                <input type="checkbox" checked={usaDataCadastro} onClick={() => setUsaDataCadastro(true)}/>
-              </>
-              }
-              <input type="text" className='infosAdicionais' placeholder='Responsável' value={responsavel} onChange={(e) => setResponsavel(e.target.value)}/>
-              <input type="text" className='infosAdicionais' placeholder='Anotar para' value={anotarPara} onChange={(e) => setAnotarPara(e.target.value)}/>
-              <label>Deseja adicionar este valor nas suas despesas?</label>
-              <input type="checkbox" className='selecione' value={selected} onClick={() => setSelected(!selected)}/>
+              <nav className='acoes-rapidas' aria-label='Ações rápidas'>
+                {acoesRapidas.map(({ rotulo, icone, acao }) => (
+                  <button key={rotulo} className='acao-rapida' onClick={acao}>
+                    <span className='acao-rapida-icone'>{icone}</span>
+                    <span>{rotulo}</span>
+                  </button>
+                ))}
+              </nav>
+
+              <section>
+                <div className='secao-cabecalho'>
+                  <h2>Últimas movimentações</h2>
+                  <button className='secao-link' onClick={() => alterarAba('extrato')}>
+                    Ver tudo <MdChevronRight size={18} />
+                  </button>
+                </div>
+                <Extrato ocultar={ocultarValores} limite={5} onSelecionar={setContaSelecionada} />
+              </section>
             </>
-          }
-          <button className='btn' disabled={!descricao || 
-          !valor || 
-          tipoConta === 'Despesa' && !parcela || 
-          tipoConta === 'Despesa' && !responsavel}
-           onClick={() => handleAdicao()}>Inserir</button>
-      </div>
-      <div className="total">
-        < Total />
-      </div>
-    </>
+          )}
+
+          {aba === 'extrato' && (
+            <Extrato ocultar={ocultarValores} comFiltro onSelecionar={setContaSelecionada} />
+          )}
+
+          {aba === 'valores' && <Total ocultar={ocultarValores} />}
+        </div>
+      </main>
+
+      {novaConta && (
+        <Modal titulo='Nova movimentação' onFechar={fecharNovaConta}>
+          <FormConta tipoInicial={novaConta} onConcluir={fecharNovaConta} />
+        </Modal>
+      )}
+
+      {contaSelecionada && (
+        <Modal titulo='Detalhes da movimentação' onFechar={fecharDetalhe}>
+          <DetalheConta id={contaSelecionada} ocultar={ocultarValores} onFechar={fecharDetalhe} />
+        </Modal>
+      )}
+    </div>
   )
 }
 

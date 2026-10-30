@@ -1,8 +1,24 @@
+.app-conteudo {
+    min-height: 100vh;
+    padding-bottom: calc(var(--altura-nav) + env(safe-area-inset-bottom) + 5rem);
+}
 
-Body {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-    background: linear-gradient(to right, rgb(37, 126, 23), rgb(3, 22, 0));
-    font-family: monospace;
+@media screen and (min-width: 768px) {
+    .app-conteudo {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+}
+
+@media screen and (min-width: 960px) {
+    .app {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+    }
+
+    .app-conteudo {
+        width: 100%;
+        max-width: 880px;
+        padding-bottom: 2rem;
+    }
 }

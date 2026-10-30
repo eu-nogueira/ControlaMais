@@ -1,0 +1,77 @@
+.cabecalho {
+    padding: calc(1rem + env(safe-area-inset-top)) 1.25rem 1.5rem;
+    background: linear-gradient(160deg, var(--cor-cabecalho-inicio) 0%, var(--cor-cabecalho-fim) 100%);
+    color: #fff;
+}
+
+.cabecalho-estendido {
+    padding-bottom: 3.75rem;
+}
+
+.cabecalho-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.cabecalho-marca {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.cabecalho-logo {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .15);
+    font-size: .9375rem;
+    font-weight: 700;
+}
+
+.cabecalho-saudacao {
+    font-size: .75rem;
+    opacity: .8;
+}
+
+.cabecalho-titulo {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.cabecalho-botao {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .15);
+    color: #fff;
+}
+
+.cabecalho-botao:hover {
+    background: rgba(255, 255, 255, .25);
+}
+
+@media screen and (min-width: 768px) {
+    .cabecalho {
+        margin: 1.5rem 1.5rem 0;
+        padding: 1.5rem 2rem 2rem;
+        border-radius: 24px;
+    }
+
+    .cabecalho-estendido {
+        padding-bottom: 4rem;
+    }
+}
+
+@media screen and (min-width: 960px) {
+    .cabecalho-estendido {
+        padding-bottom: 2rem;
+    }
+}

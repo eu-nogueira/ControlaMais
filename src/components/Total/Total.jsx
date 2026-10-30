@@ -1,8 +1,36 @@
 import { useSelector } from "react-redux";
 import { useMemo } from "react";
+import { MdCallMade, MdCallReceived } from "react-icons/md";
+import { formatarMoeda, iniciais } from "../../utils/formatar";
 import "./Total.css";
 
-function Total() {
+function ListaPessoas({ titulo, itens, vazio, classeValor, ocultar }) {
+  return (
+    <section className="total-lista">
+      <h3>{titulo}</h3>
+
+      {itens.length === 0 ? (
+        <p className="total-lista-vazia">{vazio}</p>
+      ) : (
+        <ul>
+          {itens.map((item) => (
+            <li key={item.pessoa} className="linha-pessoa">
+              <span className="linha-pessoa-avatar" aria-hidden="true">
+                {iniciais(item.pessoa)}
+              </span>
+              <span className="linha-pessoa-nome">{item.pessoa}</span>
+              <strong className={classeValor}>
+                {formatarMoeda(item.valor, ocultar)}
+              </strong>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function Total({ ocultar }) {
   const contas = useSelector(
     (state) => state.extrato.contasExtrato
   );
@@ -70,79 +98,52 @@ function Total() {
 
   const saldo = totalMeDevem - totalEuDevo;
 
-  const formatarMoeda = (valor) =>
-    valor.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-
   return (
     <div className="total-container">
-      <h1>Valores totais</h1>
+      <div className="total-balanco">
+        <span>Balanço entre pessoas</span>
+        <strong className={saldo < 0 ? "valor-negativo" : "valor-positivo"}>
+          {formatarMoeda(saldo, ocultar)}
+        </strong>
+      </div>
 
       <div className="cards-grid">
         <div className="card">
-          <h3>Valor total a ser recebido</h3>
-
+          <span className="card-icone card-icone-receber">
+            <MdCallReceived />
+          </span>
+          <p className="card-rotulo">A receber</p>
           <p className="valor valor-positivo">
-            {formatarMoeda(totalMeDevem)}
+            {formatarMoeda(totalMeDevem, ocultar)}
           </p>
         </div>
 
         <div className="card">
-          <h3>Valor total a ser pago</h3>
+          <span className="card-icone card-icone-pagar">
+            <MdCallMade />
+          </span>
+          <p className="card-rotulo">A pagar</p>
           <p className="valor valor-negativo">
-            {formatarMoeda(totalEuDevo)}
+            {formatarMoeda(totalEuDevo, ocultar)}
           </p>
         </div>
       </div>
 
       <div className="listas-grid">
-        <div className="card">
-          <h2>Valores a receber(Por pessoa)</h2>
-
-          {resumo.meDevem.length === 0 ? (
-            <p>Nenhum valor a receber.</p>
-          ) : (
-            resumo.meDevem.map((item) => (
-              <div
-                key={item.pessoa}
-                className="linha-pessoa"
-              >
-                <span>{item.pessoa}</span>
-
-                <strong className="valor-positivo">
-                  {formatarMoeda(
-                    item.valor
-                  )}
-                </strong>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="card">
-          <h2>Valor a ser pago(por pessoa)</h2>
-
-          {resumo.euDevo.length === 0 ? (
-            <p>Nenhum valor a ser pago.</p>
-          ) : (
-            resumo.euDevo.map((item) => (
-              <div
-                key={item.pessoa}
-                className="linha-pessoa"
-              >
-                <span>{item.pessoa}</span>
-
-                <strong className="valor-negativo">
-                  {formatarMoeda(
-                    item.valor
-                  )}
-                </strong>
-              </div>
-            ))
-          )}
-        </div>
+        <ListaPessoas
+          titulo="A receber por pessoa"
+          itens={resumo.meDevem}
+          vazio="Nenhum valor a receber."
+          classeValor="valor-positivo"
+          ocultar={ocultar}
+        />
+        <ListaPessoas
+          titulo="A pagar por pessoa"
+          itens={resumo.euDevo}
+          vazio="Nenhum valor a ser pago."
+          classeValor="valor-negativo"
+          ocultar={ocultar}
+        />
       </div>
     </div>
   );

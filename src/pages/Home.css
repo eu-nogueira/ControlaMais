@@ -1,76 +1,79 @@
-.insert {
+.pagina {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.25rem 1rem;
+}
+
+.acoes-rapidas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .5rem;
+    margin-top: -2.5rem;
+    padding: 1rem .5rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra-elevada);
+}
+
+.acao-rapida {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-}
-
-.pageHome {
-    display: flex;
-
-}
-
-.selecaoDespesaReceita, .insert input {
-    width: 20%;
+    gap: .5rem;
+    min-width: 0;
+    padding: 0;
     border: none;
-    background-color: transparent;
-    color: rgb(11, 50, 0);
-    border-bottom: 1px solid black;
+    background: transparent;
+    font-size: .8125rem;
+    font-weight: 500;
 }
 
-.btn {
-    border-radius: 5px;
-    border: none;
-    padding: 5px;
-    background-color: rgb(26, 120, 0);
-    color: white;
-    cursor: pointer;
-}
-
-.selecaoDespesaReceita {
-    height: 1.4rem;
-}
-
-.info {
-    background-color: #57B358;
-    color: white;
-    font-size: 7pt;
-    padding: 5px;
-    width: 10px;
-    text-align: center;
+.acao-rapida-icone {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
+    background: var(--cor-primaria-suave);
+    color: var(--cor-primaria);
+    transition: transform .15s ease;
 }
 
-.insert label {
-    color: white;
+.acao-rapida:active .acao-rapida-icone {
+    transform: scale(.94);
 }
 
-@media screen and (max-width: 768px) {
-    .pageHome {
-        flex-direction: column;
-        justify-content: center;
+.secao-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+}
+
+.secao-cabecalho h2 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.secao-link {
+    display: flex;
+    align-items: center;
+    padding: .25rem 0;
+    border: none;
+    background: transparent;
+    color: var(--cor-primaria);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+@media screen and (min-width: 960px) {
+    .pagina {
+        padding: 1.5rem;
     }
 
-    .insert {
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .selecaoDespesaReceita, .insert .infosAdicionais {
-        width: 90%;
-        height: 50px;
-        font-size: 13pt;
-    }
-
-
-    .insert button {
-        width: 90%;
-        font-size: 13pt;
-        margin-top: 1rem;
-    }
-
-    .info {
-        display: none;
+    .acoes-rapidas {
+        margin-top: 0;
+        box-shadow: var(--sombra);
     }
 }

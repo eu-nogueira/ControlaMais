@@ -1,0 +1,112 @@
+.navegacao {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    height: calc(var(--altura-nav) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid var(--cor-borda);
+    background: var(--cor-superficie);
+}
+
+.navegacao-marca,
+.navegacao-nova {
+    display: none;
+}
+
+.navegacao-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: none;
+    background: transparent;
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+    font-weight: 500;
+}
+
+.navegacao-item-ativo {
+    color: var(--cor-primaria);
+}
+
+.navegacao-fab {
+    position: fixed;
+    right: 1.25rem;
+    bottom: calc(var(--altura-nav) + env(safe-area-inset-bottom) + 1rem);
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: 18px;
+    background: var(--cor-primaria);
+    color: var(--cor-sobre-primaria);
+    box-shadow: var(--sombra-elevada);
+}
+
+@media screen and (min-width: 960px) {
+    .navegacao {
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        gap: .25rem;
+        height: 100vh;
+        padding: 1.5rem 1rem;
+        border-top: none;
+        border-right: 1px solid var(--cor-borda);
+    }
+
+    .navegacao-marca {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        margin: 0 .5rem 1.5rem;
+        font-size: 1.125rem;
+    }
+
+    .navegacao-logo {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--cor-primaria);
+        color: var(--cor-sobre-primaria);
+        font-size: .9375rem;
+        font-weight: 700;
+    }
+
+    .navegacao-nova {
+        display: flex;
+        margin-bottom: 1rem;
+    }
+
+    .navegacao-item {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: .75rem;
+        padding: .75rem 1rem;
+        border-radius: 12px;
+        font-size: .9375rem;
+    }
+
+    .navegacao-item:hover {
+        background: var(--cor-superficie-2);
+    }
+
+    .navegacao-item-ativo,
+    .navegacao-item-ativo:hover {
+        background: var(--cor-primaria-suave);
+    }
+
+    .navegacao-fab {
+        display: none;
+    }
+}
