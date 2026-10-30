@@ -21,6 +21,7 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
   const [cadastroData, setCadastroData] = useState(hojeISO)
   const [selected, setSelected] = useState(true)
   const [anotarPara, setAnotarPara] = useState('')
+  const [salvando, setSalvando] = useState(false)
   const dispatch = useDispatch()
 
   const despesa = tipoConta === 'Despesa'
@@ -53,28 +54,27 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
       : 'Seu saldo não muda. O valor ficará em "A receber" da pessoa que vai te pagar.'
   }
 
-  function handleAdicao(event) {
+  async function handleAdicao(event) {
     event.preventDefault()
-    if (pendentes.length > 0) return
+    if (pendentes.length > 0 || salvando) return
 
-    const data = cadastroData ? new Date(`${cadastroData}T00:00:00`) : new Date()
-    const dataCadastro = new Intl.DateTimeFormat(
-      'pt-BR'
-    ).format(data)
-
-    dispatch(adicionarConta({
-      id: crypto.randomUUID(),
-      descricao: descricao.trim(),
-      dataCadastro,
-      valorFormatado,
-      tipoConta,
-      responsavel: despesa ? responsavel.trim() : '',
-      parcela: despesa ? parcela : '',
-      dataVencimento: despesa ? dataVencimento : '',
-      selected: despesa && selected,
-      anotarPara: despesa ? anotarPara.trim() : ''
-    }))
-    onConcluir()
+    setSalvando(true)
+    try {
+      await dispatch(adicionarConta({
+        descricao: descricao.trim(),
+        dataCadastro: cadastroData || hojeISO(),
+        valorFormatado,
+        tipoConta,
+        responsavel: despesa ? responsavel.trim() : '',
+        parcela: despesa ? parcela : '',
+        dataVencimento: despesa ? dataVencimento : '',
+        selected: despesa && selected,
+        anotarPara: despesa ? anotarPara.trim() : ''
+      })).unwrap()
+      onConcluir()
+    } catch {
+      setSalvando(false)
+    }
   }
 
   return (
@@ -208,8 +208,8 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
       </label>
 
       <div className='form-acao'>
-        <button type='submit' className='botao botao-primario' disabled={pendentes.length > 0}>
-          {despesa ? 'Adicionar despesa' : 'Adicionar receita'}
+        <button type='submit' className='botao botao-primario' disabled={pendentes.length > 0 || salvando}>
+          {salvando ? 'Salvando...' : despesa ? 'Adicionar despesa' : 'Adicionar receita'}
         </button>
         {pendentes.length > 0 && (
           <small className='form-pendentes'>Preencha: {pendentes.join(', ')}.</small>

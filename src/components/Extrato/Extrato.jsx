@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { MdNorthEast, MdReceiptLong, MdSouthWest } from 'react-icons/md'
-import { formatarMoeda } from '../../utils/formatar'
+import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
 import './Extrato.css'
 
 const FILTROS = [
@@ -60,7 +60,7 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
       ) : (
         grupos.map((grupo, indice) => (
           <section key={`${grupo.data}-${indice}`} className='extrato-grupo'>
-            <h3 className='extrato-data'>{grupo.data}</h3>
+            <h3 className='extrato-data'>{formatarDataISO(grupo.data)}</h3>
             <ul className='extrato-lista'>
               {grupo.contas.map((conta) => {
                 const despesa = conta.tipoConta === 'Despesa'

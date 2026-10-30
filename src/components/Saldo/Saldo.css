@@ -104,6 +104,10 @@
     transition: width .3s ease;
 }
 
+.saldo-barra .saldo-barra-atencao {
+    background: #fdb022;
+}
+
 .saldo-barra .saldo-barra-alerta {
     background: #fda29b;
 }

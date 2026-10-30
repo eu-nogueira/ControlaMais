@@ -43,6 +43,11 @@
     font-weight: 600;
 }
 
+.cabecalho-acoes {
+    display: flex;
+    gap: .5rem;
+}
+
 .cabecalho-botao {
     display: grid;
     place-items: center;

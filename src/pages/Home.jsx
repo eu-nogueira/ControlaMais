@@ -1,5 +1,6 @@
 import './Home.css'
 import { useCallback, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { MdAdd, MdChevronRight, MdPeopleAlt, MdReceiptLong, MdRemove } from 'react-icons/md'
 import Cabecalho from '../components/Cabecalho/Cabecalho'
 import Saldo from '../components/Saldo/Saldo'
@@ -9,6 +10,8 @@ import Navegacao from '../components/Navegacao/Navegacao'
 import Modal from '../components/Modal/Modal'
 import FormConta from '../components/FormConta/FormConta'
 import DetalheConta from '../components/DetalheConta/DetalheConta'
+import { limparErro } from '../store/extrato'
+import supabase from '../services/supabase'
 
 const TITULOS = {
   inicio: 'Início',
@@ -21,6 +24,9 @@ function Home() {
   const [ocultarValores, setOcultarValores] = useState(false)
   const [novaConta, setNovaConta] = useState(null)
   const [contaSelecionada, setContaSelecionada] = useState(null)
+  const carregando = useSelector((state) => state.extrato.carregando)
+  const erro = useSelector((state) => state.extrato.erro)
+  const dispatch = useDispatch()
 
   const fecharNovaConta = useCallback(() => setNovaConta(null), [])
   const fecharDetalhe = useCallback(() => setContaSelecionada(null), [])
@@ -46,12 +52,22 @@ function Home() {
           titulo={TITULOS[aba]}
           ocultar={ocultarValores}
           onAlternarOcultar={() => setOcultarValores(!ocultarValores)}
+          onSair={() => supabase.auth.signOut()}
         >
           {aba === 'inicio' && <Saldo ocultar={ocultarValores} />}
         </Cabecalho>
 
         <div className='pagina'>
-          {aba === 'inicio' && (
+          {erro && (
+            <div className='app-erro' role='alert'>
+              <span>Não foi possível sincronizar com o servidor: {erro}</span>
+              <button onClick={() => dispatch(limparErro())}>Fechar</button>
+            </div>
+          )}
+
+          {carregando && <p className='app-carregando'>Carregando movimentações...</p>}
+
+          {!carregando && aba === 'inicio' && (
             <>
               <nav className='acoes-rapidas' aria-label='Ações rápidas'>
                 {acoesRapidas.map(({ rotulo, icone, acao }) => (
@@ -74,11 +90,11 @@ function Home() {
             </>
           )}
 
-          {aba === 'extrato' && (
+          {!carregando && aba === 'extrato' && (
             <Extrato ocultar={ocultarValores} comFiltro onSelecionar={setContaSelecionada} />
           )}
 
-          {aba === 'valores' && <Total ocultar={ocultarValores} />}
+          {!carregando && aba === 'valores' && <Total ocultar={ocultarValores} />}
         </div>
       </main>
 

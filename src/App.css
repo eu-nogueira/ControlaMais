@@ -1,3 +1,36 @@
+.app-carregando {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    color: var(--cor-texto-suave);
+}
+
+.pagina .app-carregando {
+    min-height: 30vh;
+}
+
+.app-erro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: 1rem;
+    padding: .75rem 1rem;
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-negativo-fundo);
+    color: var(--cor-negativo);
+    font-size: .875rem;
+}
+
+.app-erro button {
+    flex-shrink: 0;
+    padding: .25rem .5rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-weight: 600;
+}
+
 .app-conteudo {
     min-height: 100vh;
     padding-bottom: calc(var(--altura-nav) + env(safe-area-inset-bottom) + 5rem);
