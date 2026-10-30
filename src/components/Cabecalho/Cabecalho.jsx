@@ -1,14 +1,14 @@
 import { MdLogout, MdVisibility, MdVisibilityOff } from 'react-icons/md'
 import './Cabecalho.css'
 
-function Cabecalho({ titulo, ocultar, onAlternarOcultar, onSair, children }) {
+function Cabecalho({ titulo, nomeUsuario, ocultar, onAlternarOcultar, onSair, children }) {
   return (
     <header className={`cabecalho ${children ? 'cabecalho-estendido' : ''}`}>
       <div className='cabecalho-topo'>
         <div className='cabecalho-marca'>
           <span className='cabecalho-logo' aria-hidden='true'>C+</span>
           <div>
-            <p className='cabecalho-saudacao'>Controla+</p>
+            <p className='cabecalho-saudacao'>{nomeUsuario ? `Olá, ${nomeUsuario}` : 'Controla+'}</p>
             <h1 className='cabecalho-titulo'>{titulo}</h1>
           </div>
         </div>

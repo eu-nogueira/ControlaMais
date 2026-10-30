@@ -20,6 +20,7 @@ function App() {
   }, [])
 
   const usuarioId = sessao?.user.id
+  const nomeUsuario = sessao?.user.user_metadata?.nome || sessao?.user.email?.split('@')[0]
 
   useEffect(() => {
     if (usuarioId) {
@@ -35,7 +36,7 @@ function App() {
 
   return (
     <Provider store={store}>
-      {sessao ? <Home /> : <Login />}
+      {sessao ? <Home nomeUsuario={nomeUsuario} /> : <Login />}
     </Provider>
   )
 }

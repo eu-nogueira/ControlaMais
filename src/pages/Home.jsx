@@ -19,7 +19,7 @@ const TITULOS = {
   valores: 'Valores por pessoa',
 }
 
-function Home() {
+function Home({ nomeUsuario }) {
   const [aba, setAba] = useState('inicio')
   const [ocultarValores, setOcultarValores] = useState(false)
   const [novaConta, setNovaConta] = useState(null)
@@ -50,6 +50,7 @@ function Home() {
       <main className='app-conteudo'>
         <Cabecalho
           titulo={TITULOS[aba]}
+          nomeUsuario={nomeUsuario}
           ocultar={ocultarValores}
           onAlternarOcultar={() => setOcultarValores(!ocultarValores)}
           onSair={() => supabase.auth.signOut()}

@@ -11,6 +11,7 @@ const MENSAGENS_ERRO = {
 
 function Login() {
   const [modo, setModo] = useState('entrar')
+  const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -26,7 +27,7 @@ function Login() {
     setAviso('')
 
     const { data, error } = cadastro
-      ? await supabase.auth.signUp({ email, password: senha })
+      ? await supabase.auth.signUp({ email, password: senha, options: { data: { nome: nome.trim() } } })
       : await supabase.auth.signInWithPassword({ email, password: senha })
 
     setEnviando(false)
@@ -51,6 +52,13 @@ function Login() {
           <h1>Controla+</h1>
         </div>
         <p className='login-subtitulo'>{cadastro ? 'Crie sua conta' : 'Entre na sua conta'}</p>
+
+        {cadastro && (
+          <label className='login-campo'>
+            <span>Nome</span>
+            <input type='text' autoComplete='given-name' required value={nome} onChange={(e) => setNome(e.target.value)} />
+          </label>
+        )}
 
         <label className='login-campo'>
           <span>E-mail</span>
