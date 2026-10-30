@@ -4,9 +4,14 @@ import { formatarMoeda } from '../../utils/formatar'
 import './Saldo.css'
 
 function Saldo({ ocultar }) {
-    const saldo = useSelector((state) => state.extrato.saldoTotal) || 0
-    const receitaMes = useSelector((state) => state.extrato.saldoTotal - state.extrato.despesaMes) || 0
-    const despesaMes = Math.abs(useSelector((state) => state.extrato.despesaMes) || 0)
+    const contas = useSelector((state) => state.extrato.contasExtrato)
+    const receitaMes = contas
+        .filter((conta) => conta.tipoConta === 'Receita')
+        .reduce((total, conta) => total + conta.valorFormatado, 0)
+    const despesaMes = contas
+        .filter((conta) => conta.tipoConta === 'Despesa' && conta.selected)
+        .reduce((total, conta) => total + conta.valorFormatado, 0)
+    const saldo = receitaMes - despesaMes
     const porcentagemComprometimento = receitaMes > 0 ? (despesaMes / receitaMes) * 100 : 0
     const larguraBarra = Math.min(porcentagemComprometimento, 100)
 
@@ -48,7 +53,7 @@ function Saldo({ ocultar }) {
                 aria-label='Renda comprometida'
             >
                 <span
-                    className={larguraBarra >= 80 ? 'saldo-barra-alerta' : ''}
+                    className={larguraBarra >= 80 ? 'saldo-barra-alerta' : larguraBarra > 65 ? 'saldo-barra-atencao' : ''}
                     style={{ width: `${ocultar ? 0 : larguraBarra}%` }}
                 />
             </div>

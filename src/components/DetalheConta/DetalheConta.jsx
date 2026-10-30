@@ -36,7 +36,7 @@ function DetalheConta({ id, ocultar, onFechar }) {
   }
 
   const linhas = [
-    { rotulo: 'Data', valor: conta.dataCadastro },
+    { rotulo: 'Data', valor: formatarDataISO(conta.dataCadastro) },
     despesa && { rotulo: 'Vencimento', valor: formatarDataISO(conta.dataVencimento) || 'Não informado' },
     despesa && { rotulo: 'Quem paga', valor: conta.selected ? 'Eu (sai do meu saldo)' : conta.responsavel || 'Outra pessoa' },
     despesa && conta.selected && conta.anotarPara && { rotulo: 'Vou pagar para', valor: conta.anotarPara },
