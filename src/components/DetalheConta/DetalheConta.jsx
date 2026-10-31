@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdCheck, MdDeleteOutline } from 'react-icons/md'
+import { MdCheck, MdDeleteOutline, MdEdit } from 'react-icons/md'
 import { alterarParcelaPaga, removerConta } from '../../store/extrato'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
+import { ehContaFixa, totalParcelasDe } from '../../utils/parcelas'
 import './DetalheConta.css'
 
-function DetalheConta({ id, ocultar, onFechar }) {
+function DetalheConta({ id, ocultar, onEditar, onFechar }) {
   const conta = useSelector((state) => state.extrato.contasExtrato.find((item) => item.id === id))
   const [confirmarExclusao, setConfirmarExclusao] = useState(false)
   const dispatch = useDispatch()
@@ -13,9 +14,10 @@ function DetalheConta({ id, ocultar, onFechar }) {
   if (!conta) return null
 
   const despesa = conta.tipoConta === 'Despesa'
-  const totalParcelas = Number(conta.parcela) || 0
+  const fixa = ehContaFixa(conta)
+  const totalParcelas = totalParcelasDe(conta)
   const parcelasPagas = conta.parcelaPaga || 0
-  const quitada = totalParcelas > 0 && parcelasPagas >= totalParcelas
+  const quitada = totalParcelas > 1 && parcelasPagas >= totalParcelas
 
   function handleParcela() {
     if (parcelasPagas < totalParcelas) {
@@ -41,6 +43,7 @@ function DetalheConta({ id, ocultar, onFechar }) {
     despesa && { rotulo: 'Quem paga', valor: conta.selected ? 'Eu (sai do meu saldo)' : conta.responsavel || 'Outra pessoa' },
     despesa && conta.selected && conta.anotarPara && { rotulo: 'Vou pagar para', valor: conta.anotarPara },
     despesa && (conta.cartao || !conta.selected) && { rotulo: 'Pagamento', valor: conta.cartao ? `Cartão ${conta.cartao}` : 'Pix' },
+    despesa && conta.categoria && { rotulo: 'Tipo de despesa', valor: conta.categoria },
   ].filter(Boolean)
 
   return (
@@ -58,15 +61,17 @@ function DetalheConta({ id, ocultar, onFechar }) {
       {despesa && totalParcelas > 1 && (
         <div className='detalhe-parcelas'>
           <div className='detalhe-parcelas-texto'>
-            <span>Parcelas pagas</span>
-            <strong>{parcelasPagas} de {totalParcelas}</strong>
+            <span>{fixa ? 'Conta fixa · meses pagos' : 'Parcelas pagas'}</span>
+            <strong>{fixa ? parcelasPagas : `${parcelasPagas} de ${totalParcelas}`}</strong>
           </div>
-          <div className='detalhe-parcelas-barra'>
-            <span style={{ width: `${Math.min((parcelasPagas / totalParcelas) * 100, 100)}%` }} />
-          </div>
+          {!fixa && (
+            <div className='detalhe-parcelas-barra'>
+              <span style={{ width: `${Math.min((parcelasPagas / totalParcelas) * 100, 100)}%` }} />
+            </div>
+          )}
           <button className='botao botao-secundario' onClick={handleParcela} disabled={quitada}>
             <MdCheck size={18} />
-            {quitada ? 'Todas as parcelas pagas' : 'Registrar parcela paga'}
+            {quitada ? 'Todas as parcelas pagas' : fixa ? 'Registrar mês pago' : 'Registrar parcela paga'}
           </button>
         </div>
       )}
@@ -79,6 +84,14 @@ function DetalheConta({ id, ocultar, onFechar }) {
           </div>
         ))}
       </dl>
+
+      {/* Parcelados e contas fixas são editados pela aba Parcelas. */}
+      {!(despesa && totalParcelas > 1) && (
+        <button className='botao botao-secundario' onClick={() => onEditar(conta)}>
+          <MdEdit size={18} />
+          Editar movimentação
+        </button>
+      )}
 
       <button className={`botao botao-perigo ${confirmarExclusao ? 'botao-perigo-confirmar' : ''}`} onClick={handleDelete}>
         <MdDeleteOutline size={18} />

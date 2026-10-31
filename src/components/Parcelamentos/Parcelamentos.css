@@ -29,7 +29,8 @@
 
 .parcelamentos-resumo {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: repeat(3, auto);
+    justify-content: space-between;
     gap: 1rem;
     padding: 1rem 1.25rem;
     border-radius: var(--raio);
@@ -53,7 +54,7 @@
 }
 
 .parcelamentos-resumo strong {
-    font-size: 1.25rem;
+    font-size: clamp(1rem, 4.2vw, 1.25rem);
     font-variant-numeric: tabular-nums;
 }
 
@@ -112,6 +113,12 @@
     border-radius: 999px;
     background: var(--cor-superficie-2);
     color: var(--cor-texto);
+    font-size: .75rem;
+    font-weight: 500;
+}
+
+.parcelamento-total small {
+    color: var(--cor-texto-suave);
     font-size: .75rem;
     font-weight: 500;
 }
@@ -178,6 +185,27 @@
 
 .parcelamento-contador button:disabled {
     opacity: .4;
+}
+
+.parcelamento-botoes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+.parcelamento-editar {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    min-height: 44px;
+    padding: 0 .875rem;
+    border: none;
+    border-radius: 12px;
+    background: var(--cor-superficie-2);
+    color: var(--cor-texto);
+    font-size: .875rem;
+    font-weight: 600;
 }
 
 .parcelamento-excluir {

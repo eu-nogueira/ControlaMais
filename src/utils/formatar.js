@@ -7,6 +7,12 @@ export function formatarMoeda(valor, ocultar = false) {
   })
 }
 
+// Aceita "1.500,00", "1500,00" e "1500.00".
+export function lerValor(texto) {
+  const valor = texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto
+  return Number(valor)
+}
+
 export function formatarDataISO(dataISO) {
   if (!dataISO) return ''
   const [ano, mes, dia] = dataISO.split('-')

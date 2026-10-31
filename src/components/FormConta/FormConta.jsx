@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { MdAdd, MdPerson, MdPeopleAlt, MdRemove } from 'react-icons/md'
-import { adicionarConta } from '../../store/extrato'
+import { adicionarConta, editarConta } from '../../store/extrato'
 import { formatarMoeda } from '../../utils/formatar'
+import { calcularUsoCartoes, encontrarCartao, mesmoCartao } from '../../utils/cartoes'
+import { TIPOS_DESPESA } from '../../utils/dashboard'
 import './FormConta.css'
 
 function hojeISO() {
@@ -11,29 +13,43 @@ function hojeISO() {
   return data.toISOString().slice(0, 10)
 }
 
-function FormConta({ tipoInicial = 'Receita', onConcluir }) {
-  const [descricao, setDescricao] = useState('')
-  const [valor, setValor] = useState('')
-  const [tipoConta, setTipoConta] = useState(tipoInicial)
-  const [parcela, setParcela] = useState('1')
-  const [responsavel, setResponsavel] = useState('')
-  const [dataVencimento, setDataVencimento] = useState('')
-  const [cadastroData, setCadastroData] = useState(hojeISO)
-  const [selected, setSelected] = useState(true)
-  const [anotarPara, setAnotarPara] = useState('')
-  const [ehCartao, setEhCartao] = useState(false)
-  const [cartao, setCartao] = useState('')
+// Com `conta`, o formulário edita a movimentação existente em vez de criar uma nova.
+function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
+  const [descricao, setDescricao] = useState(conta?.descricao ?? '')
+  const [valor, setValor] = useState(conta ? String(conta.valorFormatado).replace('.', ',') : '')
+  const [tipoConta, setTipoConta] = useState(conta?.tipoConta ?? tipoInicial)
+  const [parcela, setParcela] = useState(conta?.parcela ? String(conta.parcela) : '1')
+  const [responsavel, setResponsavel] = useState(conta?.responsavel ?? '')
+  const [dataVencimento, setDataVencimento] = useState(conta?.dataVencimento ?? '')
+  const [cadastroData, setCadastroData] = useState(conta?.dataCadastro ?? hojeISO)
+  const [selected, setSelected] = useState(conta?.selected ?? true)
+  const [anotarPara, setAnotarPara] = useState(conta?.anotarPara ?? '')
+  const [ehCartao, setEhCartao] = useState(Boolean(conta?.cartao))
+  const [cartao, setCartao] = useState(conta?.cartao ?? '')
+  const [contaFixa, setContaFixa] = useState(conta?.contaFixa ?? false)
+  const categoriaInicial = conta?.categoria ?? ''
+  const tipoConhecido = TIPOS_DESPESA.includes(categoriaInicial)
+  const [tipoDespesa, setTipoDespesa] = useState(tipoConhecido ? categoriaInicial : categoriaInicial ? 'Outros' : '')
+  const [outroTipo, setOutroTipo] = useState(tipoConhecido ? '' : categoriaInicial)
   const [salvando, setSalvando] = useState(false)
+  const cartoesCadastrados = useSelector((state) => state.cartoes.lista)
+  const contas = useSelector((state) => state.extrato.contasExtrato)
+  const fechamento = useSelector((state) => state.extrato.fechamento)
   const dispatch = useDispatch()
 
   const despesa = tipoConta === 'Despesa'
   const valorFormatado = +valor.replace(',', '.')
   const totalParcelas = Number(parcela) || 0
+  const parcelasPagas = conta?.parcelaPaga || 0
+  // Na edição, o próprio gasto sai do cálculo para não ser contado duas vezes no limite.
+  const outrasContas = conta ? contas.filter((item) => item.id !== conta.id) : contas
+  const cartaoEscolhido = encontrarCartao(calcularUsoCartoes(cartoesCadastrados, outrasContas, fechamento), cartao)
 
   const pendentes = [
     !(valorFormatado > 0) && 'valor',
     !descricao.trim() && 'descrição',
-    despesa && totalParcelas < 1 && 'parcelas',
+    despesa && !contaFixa && totalParcelas < 1 && 'parcelas',
+    despesa && !contaFixa && totalParcelas >= 1 && totalParcelas < parcelasPagas && `parcelas (já há ${parcelasPagas} pagas)`,
     despesa && !selected && !responsavel.trim() && 'quem vai te pagar',
     despesa && ehCartao && !cartao.trim() && 'cartão usado',
   ].filter(Boolean)
@@ -43,6 +59,7 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
   }
 
   function resumoDespesa() {
+    if (contaFixa) return resumoContaFixa()
     if (totalParcelas > 1) return resumoParcelado()
 
     const valorTexto = valorFormatado > 0 ? formatarMoeda(valorFormatado) : 'O valor'
@@ -56,6 +73,21 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
     return responsavel.trim()
       ? `Seu saldo não muda. ${valorTexto} ficará em "A receber" de ${responsavel.trim()}.`
       : 'Seu saldo não muda. O valor ficará em "A receber" da pessoa que vai te pagar.'
+  }
+
+  function resumoContaFixa() {
+    const valorTexto = valorFormatado > 0 ? formatarMoeda(valorFormatado) : 'O valor'
+    const acompanhamento = 'Acompanhe na aba Parcelas; contas fixas não somam em "Falta pagar".'
+
+    if (selected) {
+      return anotarPara.trim()
+        ? `${valorTexto} será descontado do seu saldo todo mês e ficará em "A pagar" para ${anotarPara.trim()}. ${acompanhamento}`
+        : `${valorTexto} será descontado do seu saldo todo mês, sem data para terminar. ${acompanhamento}`
+    }
+
+    return responsavel.trim()
+      ? `Seu saldo não muda. ${valorTexto} ficará em "A receber" de ${responsavel.trim()} todo mês. ${acompanhamento}`
+      : `Seu saldo não muda. ${valorTexto} ficará em "A receber" da pessoa que vai te pagar todo mês. ${acompanhamento}`
   }
 
   function resumoParcelado() {
@@ -74,23 +106,36 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
       : `Seu saldo não muda. ${parcelaTexto} ficará em "A receber" da pessoa que vai te pagar. ${acompanhamento}`
   }
 
+  function avisoCartao() {
+    if (cartoesCadastrados.length === 0) return 'Cadastre seus cartões na aba Cartões para acompanhar o limite.'
+    if (!cartao.trim()) return 'Escolha um cartão cadastrado ou digite o nome.'
+    if (!cartaoEscolhido) return 'Cartão não cadastrado: o limite dele não será controlado.'
+
+    const disponivel = `Disponível no ${cartaoEscolhido.nome}: ${formatarMoeda(cartaoEscolhido.disponivel)}.`
+    const totalCompra = contaFixa ? valorFormatado : valorFormatado * Math.max(totalParcelas, 1)
+    return totalCompra > cartaoEscolhido.disponivel ? `${disponivel} Este gasto passa do limite disponível.` : disponivel
+  }
+
   async function handleAdicao(event) {
     event.preventDefault()
     if (pendentes.length > 0 || salvando) return
 
     setSalvando(true)
     try {
-      await dispatch(adicionarConta({
+      await dispatch((conta ? editarConta : adicionarConta)({
+        ...(conta && { id: conta.id }),
         descricao: descricao.trim(),
         dataCadastro: cadastroData || hojeISO(),
         valorFormatado,
         tipoConta,
         responsavel: despesa ? responsavel.trim() : '',
-        parcela: despesa ? parcela : '',
+        parcela: despesa && !contaFixa ? parcela : '',
+        contaFixa: despesa && contaFixa,
         dataVencimento: despesa ? dataVencimento : '',
         selected: despesa && selected,
         anotarPara: despesa && selected ? anotarPara.trim() : '',
-        cartao: despesa && ehCartao ? cartao.trim() : ''
+        cartao: despesa && ehCartao ? (cartaoEscolhido?.nome ?? cartao.trim()) : '',
+        categoria: !despesa ? '' : tipoDespesa === 'Outros' ? outroTipo.trim() || 'Outros' : tipoDespesa
       })).unwrap()
       onConcluir()
     } catch {
@@ -116,7 +161,7 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
       </div>
 
       <label className='form-valor'>
-        <span>{!despesa ? 'Quanto você recebeu?' : totalParcelas > 1 ? 'Qual o valor de cada parcela?' : 'Quanto foi gasto?'}</span>
+        <span>{!despesa ? 'Quanto você recebeu?' : contaFixa ? 'Qual o valor por mês?' : totalParcelas > 1 ? 'Qual o valor de cada parcela?' : 'Quanto foi gasto?'}</span>
         <div className='form-valor-campo'>
           <span aria-hidden='true'>R$</span>
           <input
@@ -139,33 +184,69 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
       {despesa && (
         <>
           <fieldset className='form-secao'>
+            <legend>Tipo de despesa <em>(opcional)</em></legend>
+            <div className='form-cartoes' role='group' aria-label='Tipo de despesa'>
+              {[...TIPOS_DESPESA, 'Outros'].map((tipo) => (
+                <button
+                  key={tipo}
+                  type='button'
+                  aria-pressed={tipoDespesa === tipo}
+                  className={`form-cartoes-opcao ${tipoDespesa === tipo ? 'form-cartoes-opcao-ativa' : ''}`}
+                  onClick={() => setTipoDespesa(tipoDespesa === tipo ? '' : tipo)}
+                >
+                  {tipo}
+                </button>
+              ))}
+            </div>
+            {tipoDespesa === 'Outros' && (
+              <label className='form-campo'>
+                <span>Qual tipo?</span>
+                <input type='text' placeholder='Ex.: Saúde, Educação, Casa' value={outroTipo} onChange={(e) => setOutroTipo(e.target.value)} />
+              </label>
+            )}
+            <small className='form-dica'>Serve apenas para o Dashboard, no gráfico de pizza que mostra para onde seus gastos estão indo.</small>
+          </fieldset>
+
+          <fieldset className='form-secao'>
             <legend>Pagamento</legend>
 
+            <label className='form-checkbox'>
+              <input type='checkbox' checked={contaFixa} onChange={(e) => setContaFixa(e.target.checked)} />
+              <span>Conta fixa</span>
+              <small>
+                {contaFixa
+                  ? 'Cobrada todo mês, sem número de parcelas (ex.: aluguel, financiamento longo).'
+                  : 'Marque para despesas mensais sem fim definido, como aluguel.'}
+              </small>
+            </label>
+
             <div className='form-linha'>
-              <div className='form-campo'>
-                <span id='rotulo-parcelas'>Parcelas</span>
-                <div className='form-contador' role='group' aria-labelledby='rotulo-parcelas'>
-                  <button type='button' onClick={() => alterarParcela(-1)} disabled={totalParcelas <= 1} aria-label='Diminuir parcelas'>
-                    <MdRemove size={20} />
-                  </button>
-                  <input
-                    type='number'
-                    inputMode='numeric'
-                    min='1'
-                    value={parcela}
-                    onChange={(e) => setParcela(e.target.value)}
-                    aria-labelledby='rotulo-parcelas'
-                  />
-                  <button type='button' onClick={() => alterarParcela(1)} aria-label='Aumentar parcelas'>
-                    <MdAdd size={20} />
-                  </button>
+              {!contaFixa && (
+                <div className='form-campo'>
+                  <span id='rotulo-parcelas'>Parcelas</span>
+                  <div className='form-contador' role='group' aria-labelledby='rotulo-parcelas'>
+                    <button type='button' onClick={() => alterarParcela(-1)} disabled={totalParcelas <= 1} aria-label='Diminuir parcelas'>
+                      <MdRemove size={20} />
+                    </button>
+                    <input
+                      type='number'
+                      inputMode='numeric'
+                      min='1'
+                      value={parcela}
+                      onChange={(e) => setParcela(e.target.value)}
+                      aria-labelledby='rotulo-parcelas'
+                    />
+                    <button type='button' onClick={() => alterarParcela(1)} aria-label='Aumentar parcelas'>
+                      <MdAdd size={20} />
+                    </button>
+                  </div>
+                  <small>
+                    {totalParcelas <= 1
+                      ? 'À vista'
+                      : `Em ${totalParcelas} vezes${valorFormatado > 0 ? ` · total ${formatarMoeda(valorFormatado * totalParcelas)}` : ''}`}
+                  </small>
                 </div>
-                <small>
-                  {totalParcelas <= 1
-                    ? 'À vista'
-                    : `Em ${totalParcelas} vezes${valorFormatado > 0 ? ` · total ${formatarMoeda(valorFormatado * totalParcelas)}` : ''}`}
-                </small>
-              </div>
+              )}
 
               <label className='form-campo'>
                 <span>Vencimento <em>(opcional)</em></span>
@@ -221,10 +302,26 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
               <small>{ehCartao ? 'Informe o cartão usado na compra.' : 'Desmarcado, o pagamento fica registrado como Pix.'}</small>
             </label>
             {ehCartao && (
-              <label className='form-campo'>
-                <span>Qual cartão foi usado?</span>
-                <input type='text' placeholder='Ex.: Nubank, Itaú' value={cartao} onChange={(e) => setCartao(e.target.value)} />
-              </label>
+              <div className='form-campo'>
+                <span id='rotulo-cartao'>Qual cartão foi usado?</span>
+                {cartoesCadastrados.length > 0 && (
+                  <div className='form-cartoes' role='group' aria-label='Cartões cadastrados'>
+                    {cartoesCadastrados.map((item) => (
+                      <button
+                        key={item.id}
+                        type='button'
+                        aria-pressed={mesmoCartao(item.nome, cartao)}
+                        className={`form-cartoes-opcao ${mesmoCartao(item.nome, cartao) ? 'form-cartoes-opcao-ativa' : ''}`}
+                        onClick={() => setCartao(item.nome)}
+                      >
+                        {item.nome}{item.final && ` •••• ${item.final}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <input aria-labelledby='rotulo-cartao' type='text' placeholder='Ex.: Nubank, Itaú' value={cartao} onChange={(e) => setCartao(e.target.value)} />
+                <small aria-live='polite'>{avisoCartao()}</small>
+              </div>
             )}
 
             <p className='form-resumo' aria-live='polite'>{resumoDespesa()}</p>
@@ -239,7 +336,7 @@ function FormConta({ tipoInicial = 'Receita', onConcluir }) {
 
       <div className='form-acao'>
         <button type='submit' className='botao botao-primario' disabled={pendentes.length > 0 || salvando}>
-          {salvando ? 'Salvando...' : despesa ? 'Adicionar despesa' : 'Adicionar receita'}
+          {salvando ? 'Salvando...' : conta ? 'Salvar alterações' : despesa ? 'Adicionar despesa' : 'Adicionar receita'}
         </button>
         {pendentes.length > 0 && (
           <small className='form-pendentes'>Preencha: {pendentes.join(', ')}.</small>

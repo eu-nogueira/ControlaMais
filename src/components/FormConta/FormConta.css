@@ -109,6 +109,17 @@
     font-weight: 600;
 }
 
+.form-secao legend em {
+    color: var(--cor-texto-suave);
+    font-style: normal;
+    font-weight: 500;
+}
+
+.form-dica {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
 .form-linha {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -247,6 +258,27 @@
     grid-column: 2;
     color: var(--cor-texto-suave);
     font-size: .75rem;
+}
+
+.form-cartoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.form-cartoes-opcao {
+    padding: .5rem .875rem;
+    border: 1.5px solid var(--cor-borda);
+    border-radius: 999px;
+    background: var(--cor-superficie);
+    font-size: .875rem;
+    font-weight: 500;
+}
+
+.form-cartoes-opcao-ativa {
+    border-color: var(--cor-primaria);
+    background: var(--cor-primaria-suave);
+    color: var(--cor-primaria);
 }
 
 .form-resumo {

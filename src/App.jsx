@@ -5,6 +5,8 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import store from './store/configureStore'
 import { carregarContas, limparExtrato } from './store/extrato'
+import { carregarCartoes, limparCartoes } from './store/cartoes'
+import { limparSimulacoes } from './store/simulacoes'
 import NovaSenha from './pages/NovaSenha'
 import supabase, { chegouPorRecuperacao, erroLinkAutenticacao } from './services/supabase'
 
@@ -30,8 +32,11 @@ function App() {
   useEffect(() => {
     if (usuarioId) {
       store.dispatch(carregarContas())
+      store.dispatch(carregarCartoes())
     } else {
       store.dispatch(limparExtrato())
+      store.dispatch(limparCartoes())
+      store.dispatch(limparSimulacoes())
     }
   }, [usuarioId])
 
@@ -45,7 +50,7 @@ function App() {
 
   return (
     <Provider store={store}>
-      {sessao ? <Home saudacao={saudacao} /> : <Login erroInicial={erroLinkAutenticacao} />}
+      {sessao ? <Home saudacao={saudacao} usuario={sessao.user} /> : <Login erroInicial={erroLinkAutenticacao} />}
     </Provider>
   )
 }

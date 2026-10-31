@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { MdChevronLeft, MdChevronRight, MdNorthEast, MdReceiptLong, MdSouthWest } from 'react-icons/md'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
-import { PRIMEIRO_MES, deslocarMes, formatarMes } from '../../utils/mes'
+import { PRIMEIRO_MES, deslocarData, deslocarMes, formatarMes, mesesEntre } from '../../utils/mes'
+import { ultimoMesComDespesa } from '../../utils/dashboard'
+import { ehContaFixa, totalParcelasDe } from '../../utils/parcelas'
 import useMesAtual from '../../hooks/useMesAtual'
 import './Extrato.css'
 
@@ -12,16 +14,35 @@ const FILTROS = [
   { valor: 'Despesa', rotulo: 'Despesas' },
 ]
 
-function agruparPorData(contas) {
-  return contas.reduce((grupos, conta) => {
+function agruparPorData(itens) {
+  return itens.reduce((grupos, item) => {
     const ultimoGrupo = grupos[grupos.length - 1]
-    if (ultimoGrupo && ultimoGrupo.data === conta.dataCadastro) {
-      ultimoGrupo.contas.push(conta)
+    if (ultimoGrupo && ultimoGrupo.data === item.data) {
+      ultimoGrupo.itens.push(item)
     } else {
-      grupos.push({ data: conta.dataCadastro, contas: [conta] })
+      grupos.push({ data: item.data, itens: [item] })
     }
     return grupos
   }, [])
+}
+
+// Parcelados aparecem em todos os meses do parcelamento, no mesmo dia da compra,
+// com o número da parcela daquele mês; contas fixas, em todos os meses a partir do cadastro;
+// as demais movimentações só no mês em que foram feitas.
+function itensDoMes(contas, mes) {
+  return contas
+    .map((conta) => {
+      const parcelas = totalParcelasDe(conta)
+      const deslocamento = mesesEntre(conta.dataCadastro.slice(0, 7), mes)
+      if (deslocamento < 0 || deslocamento >= parcelas) return null
+      return {
+        conta,
+        data: deslocarData(conta.dataCadastro, deslocamento),
+        numeroParcela: parcelas > 1 ? deslocamento + 1 : null
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.data.localeCompare(a.data))
 }
 
 function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
@@ -30,10 +51,11 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
   const [mesEscolhido, setMesEscolhido] = useState(null)
   const mesAtual = useMesAtual()
 
+  // Inclui os meses futuros que ainda têm parcela prevista.
   const ultimoMesComConta = contas.reduce((maior, conta) => {
     const mes = conta.dataCadastro.slice(0, 7)
     return mes > maior ? mes : maior
-  }, mesAtual)
+  }, [mesAtual, ultimoMesComDespesa(contas)].sort().pop())
   const ultimoMes = ultimoMesComConta < PRIMEIRO_MES ? PRIMEIRO_MES : ultimoMesComConta
   const mesBase = mesEscolhido ?? mesAtual
   const mes = mesBase < PRIMEIRO_MES ? PRIMEIRO_MES : mesBase > ultimoMes ? ultimoMes : mesBase
@@ -43,13 +65,15 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
     setMesEscolhido(novoMes === mesAtual ? null : novoMes)
   }
 
-  const contasFiltradas = [...contas]
-    .reverse()
-    .filter((conta) => !comFiltro || conta.dataCadastro.slice(0, 7) === mes)
-    .filter((conta) => filtro === 'Todos' || conta.tipoConta === filtro)
+  const itens = comFiltro
+    ? itensDoMes(contas, mes)
+    : [...contas].reverse().map((conta) => ({ conta, data: conta.dataCadastro, numeroParcela: null }))
+
+  const itensFiltrados = itens
+    .filter(({ conta }) => filtro === 'Todos' || conta.tipoConta === filtro)
     .slice(0, limite)
 
-  const grupos = agruparPorData(contasFiltradas)
+  const grupos = agruparPorData(itensFiltrados)
 
   return (
     <div className='extrato'>
@@ -92,7 +116,7 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
           <section key={`${grupo.data}-${indice}`} className='extrato-grupo'>
             <h3 className='extrato-data'>{formatarDataISO(grupo.data)}</h3>
             <ul className='extrato-lista'>
-              {grupo.contas.map((conta) => {
+              {grupo.itens.map(({ conta, numeroParcela }) => {
                 const despesa = conta.tipoConta === 'Despesa'
                 return (
                   <li key={conta.id}>
@@ -104,7 +128,9 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
                         <span className='extrato-descricao'>{conta.descricao}</span>
                         <span className='extrato-detalhe'>
                           {conta.tipoConta}
-                          {despesa && Number(conta.parcela) > 1 && ` · ${conta.parcelaPaga || 0}/${conta.parcela} parcelas`}
+                          {ehContaFixa(conta) && ' · conta fixa'}
+                          {despesa && !ehContaFixa(conta) && numeroParcela && ` · parcela ${numeroParcela} de ${conta.parcela}`}
+                          {despesa && !ehContaFixa(conta) && !numeroParcela && Number(conta.parcela) > 1 && ` · ${conta.parcelaPaga || 0}/${conta.parcela} parcelas`}
                           {despesa && !conta.selected && (conta.responsavel ? ` · ${conta.responsavel} vai pagar` : ' · outra pessoa paga')}
                         </span>
                       </span>

@@ -27,15 +27,31 @@
     place-items: center;
     width: 40px;
     height: 40px;
+    border: none;
     border-radius: 12px;
     background: rgba(255, 255, 255, .15);
+    color: #fff;
     font-size: .9375rem;
     font-weight: 700;
 }
 
+.cabecalho-logo:hover {
+    background: rgba(255, 255, 255, .25);
+}
+
 .cabecalho-saudacao {
+    display: block;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
     font-size: .75rem;
+    text-align: left;
     opacity: .8;
+}
+
+.cabecalho-saudacao:hover {
+    opacity: 1;
 }
 
 .cabecalho-titulo {
@@ -49,6 +65,7 @@
 }
 
 .cabecalho-botao {
+    position: relative;
     display: grid;
     place-items: center;
     width: 40px;
@@ -61,6 +78,24 @@
 
 .cabecalho-botao:hover {
     background: rgba(255, 255, 255, .25);
+}
+
+.cabecalho-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    display: grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 2px solid var(--cor-cabecalho-inicio);
+    border-radius: 999px;
+    background: var(--cor-negativo);
+    color: #fff;
+    font-size: .6875rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
 @media screen and (min-width: 768px) {

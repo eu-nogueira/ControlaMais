@@ -1,21 +1,25 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdAdd, MdCreditCard, MdDeleteOutline, MdPix, MdRemove } from 'react-icons/md'
+import { MdAdd, MdCreditCard, MdDeleteOutline, MdEdit, MdPix, MdRemove } from 'react-icons/md'
 import { alterarParcelaPaga, removerConta } from '../../store/extrato'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
+import { ehContaFixa, ehParcelado, estaQuitado, parcelasRestantes } from '../../utils/parcelas'
+import Modal from '../Modal/Modal'
+import FormConta from '../FormConta/FormConta'
 import './Parcelamentos.css'
 
-function ItemParcelamento({ conta, ocultar }) {
+function ItemParcelamento({ conta, ocultar, onEditar }) {
   const [salvando, setSalvando] = useState(false)
   const [confirmarExclusao, setConfirmarExclusao] = useState(false)
   const dispatch = useDispatch()
 
+  const fixa = ehContaFixa(conta)
   const totalParcelas = Number(conta.parcela)
   const parcelasPagas = conta.parcelaPaga || 0
   const valorParcela = conta.valorFormatado
   const valorTotal = valorParcela * totalParcelas
-  const quitado = parcelasPagas >= totalParcelas
-  const progresso = Math.min((parcelasPagas / totalParcelas) * 100, 100)
+  const quitado = estaQuitado(conta)
+  const progresso = fixa ? 0 : Math.min((parcelasPagas / totalParcelas) * 100, 100)
 
   async function alterarParcela(quantidade) {
     setSalvando(true)
@@ -35,8 +39,8 @@ function ItemParcelamento({ conta, ocultar }) {
   }
 
   const detalhes = [
-    `${totalParcelas}x de ${formatarMoeda(valorParcela, ocultar)}`,
-    conta.dataVencimento && `vence ${formatarDataISO(conta.dataVencimento)}`,
+    fixa ? 'Conta fixa' : `${totalParcelas}x de ${formatarMoeda(valorParcela, ocultar)}`,
+    !quitado && conta.dataVencimento && `vence ${formatarDataISO(conta.dataVencimento)}`,
     !conta.selected && (conta.responsavel ? `${conta.responsavel} paga` : 'outra pessoa paga'),
     conta.selected && conta.anotarPara && `para ${conta.anotarPara}`,
   ].filter(Boolean)
@@ -54,25 +58,35 @@ function ItemParcelamento({ conta, ocultar }) {
             </span>
           )}
         </div>
-        <span className='parcelamento-total'>{formatarMoeda(valorTotal, ocultar)}</span>
+        {/* Conta fixa não tem total: mostra só o valor mensal. */}
+        <span className='parcelamento-total'>
+          {fixa ? <>{formatarMoeda(valorParcela, ocultar)}<small>/mês</small></> : formatarMoeda(valorTotal, ocultar)}
+        </span>
       </div>
 
-      <div className='parcelamento-progresso'>
+      {fixa ? (
         <div className='parcelamento-progresso-texto'>
-          <span>{quitado ? 'Quitado' : 'Parcelas pagas'}</span>
-          <strong>{parcelasPagas} de {totalParcelas}</strong>
+          <span>Meses pagos</span>
+          <strong>{parcelasPagas}</strong>
         </div>
-        <div
-          className='parcelamento-barra'
-          role='progressbar'
-          aria-valuemin={0}
-          aria-valuemax={totalParcelas}
-          aria-valuenow={parcelasPagas}
-          aria-label={`Parcelas pagas de ${conta.descricao}`}
-        >
-          <span style={{ width: `${progresso}%` }} />
+      ) : (
+        <div className='parcelamento-progresso'>
+          <div className='parcelamento-progresso-texto'>
+            <span>{quitado ? 'Quitado' : 'Parcelas pagas'}</span>
+            <strong>{parcelasPagas} de {totalParcelas}</strong>
+          </div>
+          <div
+            className='parcelamento-barra'
+            role='progressbar'
+            aria-valuemin={0}
+            aria-valuemax={totalParcelas}
+            aria-valuenow={parcelasPagas}
+            aria-label={`Parcelas pagas de ${conta.descricao}`}
+          >
+            <span style={{ width: `${progresso}%` }} />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className='parcelamento-acoes'>
         <div className='parcelamento-contador' role='group' aria-label={`Parcelas pagas de ${conta.descricao}`}>
@@ -84,42 +98,49 @@ function ItemParcelamento({ conta, ocultar }) {
           </button>
         </div>
 
-        <button
-          className={`parcelamento-excluir ${confirmarExclusao ? 'parcelamento-excluir-confirmar' : ''}`}
-          onClick={handleDelete}
-          onBlur={() => setConfirmarExclusao(false)}
-        >
-          <MdDeleteOutline size={18} />
-          {confirmarExclusao ? 'Confirmar exclusão' : 'Excluir'}
-        </button>
+        <div className='parcelamento-botoes'>
+          <button className='parcelamento-editar' onClick={() => onEditar(conta)}>
+            <MdEdit size={18} />
+            Editar
+          </button>
+          <button
+            className={`parcelamento-excluir ${confirmarExclusao ? 'parcelamento-excluir-confirmar' : ''}`}
+            onClick={handleDelete}
+            onBlur={() => setConfirmarExclusao(false)}
+          >
+            <MdDeleteOutline size={18} />
+            {confirmarExclusao ? 'Confirmar exclusão' : 'Excluir'}
+          </button>
+        </div>
       </div>
     </li>
   )
 }
 
 const FILTROS = [
-  { valor: 'pagar', rotulo: 'Eu pago', resumo: 'Falta pagar', classeValor: 'valor-negativo', vazio: 'Você não tem parcelamentos a pagar.' },
-  { valor: 'receber', rotulo: 'Me devem', resumo: 'Falta receber', classeValor: 'valor-positivo', vazio: 'Ninguém tem parcelamentos a te pagar.' },
+  { valor: 'pagar', rotulo: 'Eu pago', resumo: 'Falta pagar(total)', rotuloParcelas: 'Parcelas a pagar(mês)', classeValor: 'valor-negativo', vazio: 'Você não tem parcelamentos a pagar.' },
+  { valor: 'receber', rotulo: 'Me devem', resumo: 'Falta receber', rotuloParcelas: 'Parcelas a receber', classeValor: 'valor-positivo', vazio: 'Ninguém tem parcelamentos a te pagar.' },
 ]
 
 function Parcelamentos({ ocultar }) {
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const [filtro, setFiltro] = useState(FILTROS[0])
+  const [contaEditada, setContaEditada] = useState(null)
+
+  const fecharEdicao = useCallback(() => setContaEditada(null), [])
 
   const parcelamentos = contas
-    .filter((conta) => conta.tipoConta === 'Despesa' && Number(conta.parcela) > 1)
+    .filter(ehParcelado)
     .filter((conta) => (filtro.valor === 'pagar' ? conta.selected : !conta.selected))
-    .sort((a, b) => {
-      const aQuitado = (a.parcelaPaga || 0) >= Number(a.parcela)
-      const bQuitado = (b.parcelaPaga || 0) >= Number(b.parcela)
-      return aQuitado - bQuitado
-    })
+    .sort((a, b) => estaQuitado(a) - estaQuitado(b))
 
-  const emAndamento = parcelamentos.filter((conta) => (conta.parcelaPaga || 0) < Number(conta.parcela))
-  const totalRestante = emAndamento.reduce((total, conta) => {
-    const parcelasRestantes = Number(conta.parcela) - (conta.parcelaPaga || 0)
-    return total + conta.valorFormatado * parcelasRestantes
-  }, 0)
+  const emAndamento = parcelamentos.filter((conta) => !estaQuitado(conta))
+  // "Falta pagar" não inclui contas fixas: elas não têm fim e distorceriam o total.
+  const totalRestante = emAndamento
+    .filter((conta) => !ehContaFixa(conta))
+    .reduce((total, conta) => total + conta.valorFormatado * parcelasRestantes(conta), 0)
+  // Soma de uma parcela de cada item em andamento, incluindo contas fixas.
+  const totalParcelas = emAndamento.reduce((total, conta) => total + conta.valorFormatado, 0)
 
   return (
     <div className='parcelamentos'>
@@ -141,7 +162,7 @@ function Parcelamentos({ ocultar }) {
         <div className='parcelamentos-vazio'>
           <MdCreditCard size={40} />
           <p>{filtro.vazio}</p>
-          <span>Despesas com mais de uma parcela aparecerão nesta aba.</span>
+          <span>Despesas com mais de uma parcela e contas fixas aparecerão nesta aba.</span>
         </div>
       ) : (
         <>
@@ -151,6 +172,10 @@ function Parcelamentos({ ocultar }) {
               <strong className={filtro.classeValor}>{formatarMoeda(totalRestante, ocultar)}</strong>
             </div>
             <div>
+              <span>{filtro.rotuloParcelas}</span>
+              <strong>{formatarMoeda(totalParcelas, ocultar)}</strong>
+            </div>
+            <div>
               <span>Em andamento</span>
               <strong>{emAndamento.length}</strong>
             </div>
@@ -158,10 +183,16 @@ function Parcelamentos({ ocultar }) {
 
           <ul className='parcelamentos-lista'>
             {parcelamentos.map((conta) => (
-              <ItemParcelamento key={conta.id} conta={conta} ocultar={ocultar} />
+              <ItemParcelamento key={conta.id} conta={conta} ocultar={ocultar} onEditar={setContaEditada} />
             ))}
           </ul>
         </>
+      )}
+
+      {contaEditada && (
+        <Modal titulo='Editar parcelamento' onFechar={fecharEdicao}>
+          <FormConta conta={contaEditada} onConcluir={fecharEdicao} />
+        </Modal>
       )}
     </div>
   )

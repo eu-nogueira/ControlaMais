@@ -18,4 +18,13 @@ const supabase = createClient(
     }
 )
 
+const MENSAGENS_ERRO_SENHA = {
+    'New password should be different from the old password.': 'A nova senha precisa ser diferente da anterior.',
+    'Password should be at least 6 characters.': 'A senha deve ter pelo menos 6 caracteres.',
+}
+
+export function traduzirErroSenha(error) {
+    return MENSAGENS_ERRO_SENHA[error.message] || error.message
+}
+
 export default supabase

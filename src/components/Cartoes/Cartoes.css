@@ -1,0 +1,304 @@
+.cartoes {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cartoes-resumo {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+.cartoes-resumo div {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+}
+
+.cartoes-resumo div:last-child {
+    text-align: right;
+}
+
+.cartoes-resumo span {
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+}
+
+.cartoes-resumo strong {
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.cartoes-sem-cadastro {
+    display: flex;
+    flex-direction: column;
+    gap: .625rem;
+    padding: .875rem 1rem;
+    border-left: 3px solid var(--cor-primaria);
+    border-radius: 0 var(--raio-pequeno) var(--raio-pequeno) 0;
+    background: var(--cor-superficie-2);
+    font-size: .8125rem;
+}
+
+.cartoes-sem-cadastro div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.cartoes-sem-cadastro button {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .375rem .75rem;
+    border: 1px solid var(--cor-primaria);
+    border-radius: 999px;
+    background: var(--cor-superficie);
+    color: var(--cor-primaria);
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
+.cartoes-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    color: var(--cor-texto-suave);
+    text-align: center;
+}
+
+.cartoes-vazio p {
+    color: var(--cor-texto);
+    font-weight: 600;
+}
+
+.cartoes-vazio span {
+    font-size: .875rem;
+}
+
+.cartoes-lista {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cartao {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+.cartao-face {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 120px;
+    padding: 1rem 1.125rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, .18) 0%, rgba(0, 0, 0, .25) 100%), var(--cor-cartao);
+    color: #fff;
+}
+
+.cartao-face-topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cartao-face-topo strong {
+    font-size: 1.0625rem;
+    overflow-wrap: anywhere;
+}
+
+.cartao-face-rodape {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: .8125rem;
+    opacity: .9;
+}
+
+.cartao-face-rodape span:first-child {
+    font-size: 1rem;
+    letter-spacing: .08em;
+    font-variant-numeric: tabular-nums;
+}
+
+.cartao-limite {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.cartao-limite-valores {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cartao-limite-valores div {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+}
+
+.cartao-limite-valores div:last-child {
+    text-align: right;
+}
+
+.cartao-limite-valores span,
+.cartao-limite small {
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+}
+
+.cartao-limite-valores strong {
+    font-variant-numeric: tabular-nums;
+}
+
+.cartao-barra {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--cor-superficie-2);
+}
+
+.cartao-barra span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--cor-primaria);
+    transition: width .3s ease;
+}
+
+.cartao-barra-estourada span {
+    background: var(--cor-negativo);
+}
+
+.cartao-compras {
+    border-top: 1px solid var(--cor-borda);
+    padding-top: .75rem;
+    font-size: .875rem;
+}
+
+.cartao-compras summary {
+    color: var(--cor-primaria);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cartao-compras ul {
+    display: flex;
+    flex-direction: column;
+    gap: .625rem;
+    margin: .75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cartao-compras li {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.cartao-compra-topo {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cartao-compra-topo div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.cartao-compra-topo strong {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.cartao-compra-topo span {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
+.cartao-compra-progresso {
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
+}
+
+.cartao-compra-progresso-texto {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
+.cartao-compra-progresso-texto strong {
+    color: var(--cor-texto);
+    font-weight: 600;
+}
+
+.cartao-barra-fina {
+    height: 6px;
+}
+
+.cartao-compras .cartao-compra-valor {
+    flex-shrink: 0;
+    color: var(--cor-texto);
+    font-size: .875rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.cartao-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+.cartao-acao {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .5rem .75rem;
+    border: none;
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-superficie-2);
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+    font-weight: 500;
+}
+
+.cartao-excluir-confirmar {
+    background: var(--cor-negativo);
+    color: #fff;
+}
+
+@media screen and (min-width: 768px) {
+    .cartoes-lista {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+}

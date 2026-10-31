@@ -1,14 +1,16 @@
-import { PRIMEIRO_MES, deslocarMes } from './mes'
+import { PRIMEIRO_MES, deslocarData, deslocarMes } from './mes'
+import { ehParcelado, parcelasRestantes } from './parcelas'
 
 const mesDa = (conta) => conta.dataCadastro.slice(0, 7)
 
 const somar = (contas) => contas.reduce((total, conta) => total + conta.valorFormatado, 0)
 
+// Contas fixas nunca terminam, então seguem ativas em todos os meses.
 function ehParcelamentoAtivo(conta) {
   return conta.tipoConta === 'Despesa'
     && conta.selected
-    && Number(conta.parcela) > 1
-    && (conta.parcelaPaga || 0) < Number(conta.parcela)
+    && ehParcelado(conta)
+    && parcelasRestantes(conta) > 0
 }
 
 // Período aberto: movimentações posteriores ao último mês fechado, mais a parcela
@@ -44,7 +46,7 @@ export function mesesParaFechar(contas, fechamento, mesAtual) {
 }
 
 // Fecha os meses em ordem: cada um gera a sobra para o seguinte e registra
-// +1 parcela paga nos parcelamentos em andamento.
+// +1 parcela paga nos parcelamentos em andamento, levando o vencimento para o mês seguinte.
 export function simularFechamento(contas, fechamento, meses) {
   let atual = fechamento
   let lista = contas
@@ -56,14 +58,18 @@ export function simularFechamento(contas, fechamento, meses) {
     fechamentos.push(atual)
     lista = lista.map((conta) => (
       mesDa(conta) <= mes && ehParcelamentoAtivo(conta)
-        ? { ...conta, parcelaPaga: (conta.parcelaPaga || 0) + 1 }
+        ? {
+          ...conta,
+          parcelaPaga: (conta.parcelaPaga || 0) + 1,
+          dataVencimento: conta.dataVencimento && deslocarData(conta.dataVencimento, 1)
+        }
         : conta
     ))
   })
 
   const alteradas = lista
     .filter((conta, indice) => conta.parcelaPaga !== contas[indice].parcelaPaga)
-    .map((conta) => ({ id: conta.id, parcelaPaga: conta.parcelaPaga }))
+    .map((conta) => ({ id: conta.id, parcelaPaga: conta.parcelaPaga, dataVencimento: conta.dataVencimento }))
 
   return { fechamentos, alteradas }
 }

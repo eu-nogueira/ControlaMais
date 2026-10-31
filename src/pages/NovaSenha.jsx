@@ -1,11 +1,6 @@
 import './Login.css'
 import { useState } from 'react'
-import supabase from '../services/supabase'
-
-const MENSAGENS_ERRO = {
-  'New password should be different from the old password.': 'A nova senha precisa ser diferente da anterior.',
-  'Password should be at least 6 characters.': 'A senha deve ter pelo menos 6 caracteres.',
-}
+import supabase, { traduzirErroSenha } from '../services/supabase'
 
 function NovaSenha({ onConcluir }) {
   const [senha, setSenha] = useState('')
@@ -26,7 +21,7 @@ function NovaSenha({ onConcluir }) {
     setEnviando(false)
 
     if (error) {
-      setErro(MENSAGENS_ERRO[error.message] || error.message)
+      setErro(traduzirErroSenha(error))
     } else {
       onConcluir()
     }
