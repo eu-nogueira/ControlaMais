@@ -1,10 +1,69 @@
 import { useSelector } from "react-redux";
-import { useMemo } from "react";
-import { MdCallMade, MdCallReceived } from "react-icons/md";
-import { formatarMoeda, iniciais } from "../../utils/formatar";
+import { useCallback, useMemo, useState } from "react";
+import { MdCallMade, MdCallReceived, MdChevronRight } from "react-icons/md";
+import { formatarDataISO, formatarMoeda, iniciais } from "../../utils/formatar";
+import { ehContaFixa } from "../../utils/parcelas";
+import Modal from "../Modal/Modal";
 import "./Total.css";
 
-function ListaPessoas({ titulo, itens, vazio, classeValor, ocultar }) {
+// Mesmo critério usado nos totais: "pagar" = eu pago e anotei para a pessoa;
+// "receber" = a pessoa paga a despesa por mim.
+function contasDaPessoa(contas, pessoa, tipo) {
+  return contas
+    .filter((conta) => conta.tipoConta === "Despesa")
+    .filter((conta) =>
+      tipo === "pagar"
+        ? conta.selected && conta.anotarPara === pessoa
+        : !conta.selected && conta.responsavel === pessoa
+    )
+    .sort((a, b) => b.dataCadastro.localeCompare(a.dataCadastro));
+}
+
+function detalheConta(conta, ocultar) {
+  const parcelas = Number(conta.parcela) || 1;
+  return [
+    formatarDataISO(conta.dataCadastro),
+    ehContaFixa(conta)
+      ? "conta fixa (valor mensal)"
+      : parcelas > 1 &&
+        `${parcelas}x de ${formatarMoeda(conta.valorFormatado, ocultar)} · ${conta.parcelaPaga || 0} de ${parcelas} pagas`,
+    conta.cartao && `cartão ${conta.cartao}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function DetalhePessoa({ pessoa, tipo, contas, ocultar }) {
+  const itens = contasDaPessoa(contas, pessoa, tipo);
+  const total = itens.reduce((soma, conta) => soma + Number(conta.valorFormatado || 0), 0);
+  const classeValor = tipo === "pagar" ? "valor-negativo" : "valor-positivo";
+
+  return (
+    <div className="pessoa-detalhe">
+      <div className="pessoa-detalhe-total">
+        <span>{tipo === "pagar" ? `Você deve a ${pessoa}` : `${pessoa} te deve`}</span>
+        <strong className={classeValor}>{formatarMoeda(total, ocultar)}</strong>
+        <small>
+          {itens.length} {itens.length === 1 ? "movimentação" : "movimentações"}. Parcelados e contas fixas contam o valor de uma parcela, como no total da aba.
+        </small>
+      </div>
+
+      <ul className="pessoa-detalhe-lista">
+        {itens.map((conta) => (
+          <li key={conta.id}>
+            <div>
+              <strong>{conta.descricao}</strong>
+              <span>{detalheConta(conta, ocultar)}</span>
+            </div>
+            <strong className={classeValor}>{formatarMoeda(conta.valorFormatado, ocultar)}</strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ListaPessoas({ titulo, itens, vazio, classeValor, ocultar, onSelecionar }) {
   return (
     <section className="total-lista">
       <h3>{titulo}</h3>
@@ -15,13 +74,16 @@ function ListaPessoas({ titulo, itens, vazio, classeValor, ocultar }) {
         <ul>
           {itens.map((item) => (
             <li key={item.pessoa} className="linha-pessoa">
-              <span className="linha-pessoa-avatar" aria-hidden="true">
-                {iniciais(item.pessoa)}
-              </span>
-              <span className="linha-pessoa-nome">{item.pessoa}</span>
-              <strong className={classeValor}>
-                {formatarMoeda(item.valor, ocultar)}
-              </strong>
+              <button type="button" onClick={() => onSelecionar(item.pessoa)}>
+                <span className="linha-pessoa-avatar" aria-hidden="true">
+                  {iniciais(item.pessoa)}
+                </span>
+                <span className="linha-pessoa-nome">{item.pessoa}</span>
+                <strong className={classeValor}>
+                  {formatarMoeda(item.valor, ocultar)}
+                </strong>
+                <MdChevronRight size={20} className="linha-pessoa-seta" aria-hidden="true" />
+              </button>
             </li>
           ))}
         </ul>
@@ -34,6 +96,8 @@ function Total({ ocultar }) {
   const contas = useSelector(
     (state) => state.extrato.contasExtrato
   );
+  const [pessoaAberta, setPessoaAberta] = useState(null);
+  const fecharPessoa = useCallback(() => setPessoaAberta(null), []);
 
   const resumo = useMemo(() => {
     const euDevo = {};
@@ -138,6 +202,7 @@ function Total({ ocultar }) {
           vazio="Nenhum valor a receber."
           classeValor="valor-positivo"
           ocultar={ocultar}
+          onSelecionar={(pessoa) => setPessoaAberta({ pessoa, tipo: "receber" })}
         />
         <ListaPessoas
           titulo="A pagar por pessoa"
@@ -145,8 +210,18 @@ function Total({ ocultar }) {
           vazio="Nenhum valor a ser pago."
           classeValor="valor-negativo"
           ocultar={ocultar}
+          onSelecionar={(pessoa) => setPessoaAberta({ pessoa, tipo: "pagar" })}
         />
       </div>
+
+      {pessoaAberta && (
+        <Modal
+          titulo={pessoaAberta.tipo === "pagar" ? `O que você deve a ${pessoaAberta.pessoa}` : `O que ${pessoaAberta.pessoa} te deve`}
+          onFechar={fecharPessoa}
+        >
+          <DetalhePessoa pessoa={pessoaAberta.pessoa} tipo={pessoaAberta.tipo} contas={contas} ocultar={ocultar} />
+        </Modal>
+      )}
     </div>
   );
 }
