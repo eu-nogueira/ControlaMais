@@ -11,8 +11,12 @@
     "android": "vite build && cap sync android && cap open android"
   },
   "dependencies": {
+    "@capacitor-community/file-opener": "^8.0.1",
     "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/file-transfer": "^2.0.6",
+    "@capacitor/filesystem": "^8.1.5",
     "@capacitor/preferences": "^8.0.1",
     "@reduxjs/toolkit": "^2.11.2",
     "@supabase/supabase-js": "^2.118.0",

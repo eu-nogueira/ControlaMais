@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import armazenamentoSessao from './armazenamentoSessao'
+import { mensagemErro } from './erros'
 
 // Lido antes de o cliente limpar a URL ao processar o link recebido por e-mail.
 const parametrosLink = new URLSearchParams(window.location.hash.slice(1))
@@ -24,7 +25,7 @@ const MENSAGENS_ERRO_SENHA = {
 }
 
 export function traduzirErroSenha(error) {
-    return MENSAGENS_ERRO_SENHA[error.message] || error.message
+    return MENSAGENS_ERRO_SENHA[error.message] || mensagemErro(error)
 }
 
 export default supabase

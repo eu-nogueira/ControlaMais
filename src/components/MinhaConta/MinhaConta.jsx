@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import supabase, { traduzirErroSenha } from '../../services/supabase'
 import { TEMAS, aplicarTema, lerTemaLocal } from '../../services/tema'
+import { mensagemErro } from '../../services/erros'
 import './MinhaConta.css'
 
 function MinhaConta({ usuario, onAbrirTutorial }) {
@@ -26,7 +27,7 @@ function MinhaConta({ usuario, onAbrirTutorial }) {
     setSalvandoNome(false)
 
     setRetornoNome(error
-      ? { erro: true, mensagem: error.message }
+      ? { erro: true, mensagem: mensagemErro(error) }
       : { erro: false, mensagem: 'Nome atualizado.' })
   }
 
@@ -40,7 +41,7 @@ function MinhaConta({ usuario, onAbrirTutorial }) {
     const { error } = await supabase.auth.updateUser({ data: { tema: novoTema } })
     if (error) {
       setTema(aplicarTema(anterior))
-      setRetornoTema({ erro: true, mensagem: `Não foi possível salvar o tema: ${error.message}` })
+      setRetornoTema({ erro: true, mensagem: `Não foi possível salvar o tema: ${mensagemErro(error)}` })
     }
   }
 

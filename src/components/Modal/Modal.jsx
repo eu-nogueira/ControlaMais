@@ -2,10 +2,11 @@ import { useEffect } from 'react'
 import { MdClose } from 'react-icons/md'
 import './Modal.css'
 
-function Modal({ titulo, onFechar, children }) {
+// `fixo`: não fecha pelo X, pelo fundo nem pelo Esc (ex.: atualização obrigatória).
+function Modal({ titulo, onFechar, fixo = false, children }) {
   useEffect(() => {
     function handleTecla(event) {
-      if (event.key === 'Escape') onFechar()
+      if (event.key === 'Escape' && !fixo) onFechar()
     }
 
     const overflowAnterior = document.body.style.overflow
@@ -16,10 +17,10 @@ function Modal({ titulo, onFechar, children }) {
       document.body.style.overflow = overflowAnterior
       window.removeEventListener('keydown', handleTecla)
     }
-  }, [onFechar])
+  }, [onFechar, fixo])
 
   return (
-    <div className='modal-overlay' onClick={onFechar}>
+    <div className='modal-overlay' onClick={fixo ? undefined : onFechar}>
       <div
         className='modal'
         role='dialog'
@@ -30,9 +31,11 @@ function Modal({ titulo, onFechar, children }) {
         <span className='modal-alca' aria-hidden='true' />
         <header className='modal-cabecalho'>
           <h2>{titulo}</h2>
-          <button className='modal-fechar' onClick={onFechar} aria-label='Fechar'>
-            <MdClose size={22} />
-          </button>
+          {!fixo && (
+            <button className='modal-fechar' onClick={onFechar} aria-label='Fechar'>
+              <MdClose size={22} />
+            </button>
+          )}
         </header>
         <div className='modal-conteudo'>
           {children}

@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import supabase from "../services/supabase";
 import { mesmoCartao } from "../utils/cartoes";
+import { mensagemErro } from '../services/erros'
 
 function paraCartao(linha) {
     return {
@@ -91,7 +92,7 @@ const estadoInicial = {
 }
 
 function registrarErro(state, action) {
-    state.erro = action.error.message
+    state.erro = mensagemErro(action.error)
 }
 
 const cartoes = createSlice({

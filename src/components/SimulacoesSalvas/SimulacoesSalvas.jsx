@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdCompareArrows, MdContentCopy, MdDeleteOutline, MdEmojiEvents, MdFolderOpen, MdHistory, MdInfoOutline } from 'react-icons/md'
+import { MdAutorenew, MdCompareArrows, MdContentCopy, MdDeleteOutline, MdEmojiEvents, MdFolderOpen, MdHistory, MdInfoOutline } from 'react-icons/md'
 import { carregarSimulacoes, removerSimulacao } from '../../store/simulacoes'
 import { cenarioAtual, descreverRecurso, escolherMelhorCenario, simularEntrada } from '../../utils/simulacao'
 import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import useMesAtual from '../../hooks/useMesAtual'
 import { VEREDITOS } from '../Simulacao/vereditos'
+import { mensagemErro } from '../../services/erros'
 import './SimulacoesSalvas.css'
 
 const MAXIMO_COMPARACAO = 3
@@ -28,16 +29,29 @@ function SeloVeredito({ veredito }) {
 
 function ItemSalvo({ simulacao, aberta, selecionada, podeSelecionar, ocultar, onAlternar, onAbrir, onDuplicar }) {
   const [confirmarExclusao, setConfirmarExclusao] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+  const [erroExclusao, setErroExclusao] = useState(null)
   const dispatch = useDispatch()
   const { resumo } = simulacao
   const formatar = (valor) => formatarMoeda(valor, ocultar)
 
-  function handleExcluir() {
+  // Enquanto o servidor não confirma, as ações do item ficam bloqueadas com o carregamento.
+  // Ao concluir, o item sai da lista; em caso de erro, a mensagem aparece no próprio item.
+  async function handleExcluir() {
+    if (excluindo) return
     if (!confirmarExclusao) {
       setConfirmarExclusao(true)
       return
     }
-    dispatch(removerSimulacao(simulacao.id))
+    setExcluindo(true)
+    setErroExclusao(null)
+    try {
+      await dispatch(removerSimulacao(simulacao.id)).unwrap()
+    } catch (error) {
+      setErroExclusao(mensagemErro(error))
+      setConfirmarExclusao(false)
+      setExcluindo(false)
+    }
   }
 
   return (
@@ -98,6 +112,7 @@ function ItemSalvo({ simulacao, aberta, selecionada, podeSelecionar, ocultar, on
         )}
       </dl>
       <small className='salvas-item-nota'>Valores do dia em que foi salva.</small>
+      {erroExclusao && <p className='salvas-item-erro' role='alert'>Não foi possível excluir: {erroExclusao}</p>}
 
       <div className='salvas-item-acoes'>
         <label className={`salvas-comparar ${!podeSelecionar && !selecionada ? 'salvas-comparar-desativado' : ''}`}>
@@ -105,16 +120,18 @@ function ItemSalvo({ simulacao, aberta, selecionada, podeSelecionar, ocultar, on
           Comparar
         </label>
         <div>
-          <button type='button' onClick={onAbrir}><MdFolderOpen size={18} />Abrir</button>
-          <button type='button' onClick={onDuplicar}><MdContentCopy size={18} />Duplicar</button>
+          <button type='button' onClick={onAbrir} disabled={excluindo}><MdFolderOpen size={18} />Abrir</button>
+          <button type='button' onClick={onDuplicar} disabled={excluindo}><MdContentCopy size={18} />Duplicar</button>
           <button
             type='button'
             className={`salvas-excluir ${confirmarExclusao ? 'salvas-excluir-confirmar' : ''}`}
             onClick={handleExcluir}
             onBlur={() => setConfirmarExclusao(false)}
+            disabled={excluindo}
+            aria-busy={excluindo}
           >
-            <MdDeleteOutline size={18} />
-            {confirmarExclusao ? 'Confirmar' : 'Excluir'}
+            {excluindo ? <MdAutorenew size={18} className='girando' /> : <MdDeleteOutline size={18} />}
+            {excluindo ? 'Excluindo...' : confirmarExclusao ? 'Confirmar' : 'Excluir'}
           </button>
         </div>
       </div>

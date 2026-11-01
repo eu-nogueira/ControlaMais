@@ -175,6 +175,15 @@
     color: #fff;
 }
 
+.salvas-item-acoes button:disabled {
+    opacity: .6;
+}
+
+.salvas-item-erro {
+    color: var(--cor-negativo);
+    font-size: .8125rem;
+}
+
 .salvas-comparar {
     display: inline-flex;
     align-items: center;

@@ -9,6 +9,7 @@ import SimulacoesSalvas from '../SimulacoesSalvas/SimulacoesSalvas'
 import useMesAtual from '../../hooks/useMesAtual'
 import { VEREDITOS } from './vereditos'
 import { ANO_TABELA_INSS, DIAS_FERIAS_MAXIMO, DIAS_FERIAS_MINIMO, DIAS_VENDA_MAXIMO } from '../../utils/ferias'
+import { mensagemErro } from '../../services/erros'
 import './Simulacao.css'
 
 const TIPOS = [
@@ -363,7 +364,7 @@ function EditorSimulacao({ rascunho, ocultar, onSalvo, onNova }) {
       setRetornoSalvar({ erro: false, mensagem: comoNova || !rascunho.id ? 'Simulação salva. Veja em "Salvas".' : 'Alterações salvas.' })
       onSalvo(salva)
     } catch (error) {
-      setRetornoSalvar({ erro: true, mensagem: `Não foi possível salvar: ${error.message}` })
+      setRetornoSalvar({ erro: true, mensagem: `Não foi possível salvar: ${mensagemErro(error)}` })
     }
     setSalvando(false)
   }

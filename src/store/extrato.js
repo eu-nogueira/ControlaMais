@@ -3,6 +3,7 @@ import supabase from "../services/supabase";
 import { mesesParaFechar, simularFechamento } from "../utils/saldo";
 import { deslocarData } from "../utils/mes";
 import { editarCartao } from "./cartoes";
+import { mensagemErro } from '../services/erros'
 
 function paraConta(linha) {
     return {
@@ -141,7 +142,7 @@ const estadoInicial = {
 
 function registrarErro(state, action) {
     state.carregando = false
-    state.erro = action.error.message
+    state.erro = mensagemErro(action.error)
 }
 
 const extrato = createSlice({

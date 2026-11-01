@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdCheck, MdDeleteOutline, MdEdit } from 'react-icons/md'
+import { MdAutorenew, MdCheck, MdDeleteOutline, MdEdit } from 'react-icons/md'
 import { alterarParcelaPaga, removerConta } from '../../store/extrato'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
 import { ehContaFixa, totalParcelasDe } from '../../utils/parcelas'
+import { mensagemErro } from '../../services/erros'
 import './DetalheConta.css'
 
 function DetalheConta({ id, ocultar, onEditar, onFechar }) {
   const conta = useSelector((state) => state.extrato.contasExtrato.find((item) => item.id === id))
   const [confirmarExclusao, setConfirmarExclusao] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+  const [erroExclusao, setErroExclusao] = useState(null)
   const dispatch = useDispatch()
 
   if (!conta) return null
@@ -28,13 +31,23 @@ function DetalheConta({ id, ocultar, onEditar, onFechar }) {
     }
   }
 
-  function handleDelete() {
+  // O modal só fecha depois que o servidor confirma; até lá o botão fica bloqueado com o carregamento.
+  async function handleDelete() {
+    if (excluindo) return
     if (!confirmarExclusao) {
       setConfirmarExclusao(true)
       return
     }
-    dispatch(removerConta(conta))
-    onFechar()
+    setExcluindo(true)
+    setErroExclusao(null)
+    try {
+      await dispatch(removerConta(conta)).unwrap()
+      onFechar()
+    } catch (error) {
+      setErroExclusao(mensagemErro(error))
+      setConfirmarExclusao(false)
+      setExcluindo(false)
+    }
   }
 
   const linhas = [
@@ -93,9 +106,16 @@ function DetalheConta({ id, ocultar, onEditar, onFechar }) {
         </button>
       )}
 
-      <button className={`botao botao-perigo ${confirmarExclusao ? 'botao-perigo-confirmar' : ''}`} onClick={handleDelete}>
-        <MdDeleteOutline size={18} />
-        {confirmarExclusao ? 'Toque novamente para confirmar' : 'Excluir movimentação'}
+      {erroExclusao && <p className='detalhe-erro' role='alert'>Não foi possível excluir: {erroExclusao}</p>}
+
+      <button
+        className={`botao botao-perigo ${confirmarExclusao ? 'botao-perigo-confirmar' : ''}`}
+        onClick={handleDelete}
+        disabled={excluindo}
+        aria-busy={excluindo}
+      >
+        {excluindo ? <MdAutorenew size={18} className='girando' /> : <MdDeleteOutline size={18} />}
+        {excluindo ? 'Excluindo...' : confirmarExclusao ? 'Toque novamente para confirmar' : 'Excluir movimentação'}
       </button>
     </div>
   )

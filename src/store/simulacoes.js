@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import supabase from "../services/supabase";
+import { mensagemErro } from '../services/erros'
 
 // Simulações salvas ficam em tabela própria e nunca alteram as movimentações reais.
 function paraSimulacao(linha) {
@@ -70,7 +71,7 @@ const simulacoes = createSlice({
             })
             .addCase(carregarSimulacoes.rejected, (state, action) => {
                 state.carregando = false
-                state.erro = action.error.message
+                state.erro = mensagemErro(action.error)
             })
             .addCase(salvarSimulacao.fulfilled, (state, action) => {
                 state.lista = [action.payload, ...state.lista.filter((simulacao) => simulacao.id !== action.payload.id)]
@@ -78,9 +79,6 @@ const simulacoes = createSlice({
             })
             .addCase(removerSimulacao.fulfilled, (state, action) => {
                 state.lista = state.lista.filter((simulacao) => simulacao.id !== action.payload)
-            })
-            .addCase(removerSimulacao.rejected, (state, action) => {
-                state.erro = action.error.message
             })
     }
 })

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import supabase from '../services/supabase'
 import { definirLembrar, deveLembrar, emailLembrado } from '../services/armazenamentoSessao'
+import { mensagemErro } from '../services/erros'
 
 const MENSAGENS_ERRO = {
   'Invalid login credentials': 'E-mail ou senha incorretos.',
@@ -47,7 +48,7 @@ function Login({ erroInicial = '' }) {
     if (recuperacao) {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: enderecoRedefinicao() })
       setEnviando(false)
-      if (error) setErro(MENSAGENS_ERRO[error.message] || error.message)
+      if (error) setErro(MENSAGENS_ERRO[error.message] || mensagemErro(error))
       else setAviso('Se existir uma conta com este e-mail, você vai receber um link para criar uma nova senha.')
       return
     }
@@ -60,7 +61,7 @@ function Login({ erroInicial = '' }) {
 
     setEnviando(false)
     if (error) {
-      setErro(MENSAGENS_ERRO[error.message] || error.message)
+      setErro(MENSAGENS_ERRO[error.message] || mensagemErro(error))
     } else if (cadastro && !data.session) {
       setAviso('Conta criada. Confirme o cadastro pelo link enviado ao seu e-mail.')
     }

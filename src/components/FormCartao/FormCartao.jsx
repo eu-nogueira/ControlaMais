@@ -4,6 +4,7 @@ import { MdCheck } from 'react-icons/md'
 import { adicionarCartao, editarCartao } from '../../store/cartoes'
 import { CORES_CARTAO } from '../../utils/cartoes'
 import { juntarLista, lerValor } from '../../utils/formatar'
+import { mensagemErro } from '../../services/erros'
 import './FormCartao.css'
 
 function FormCartao({ cartao, nomeInicial = '', onConcluir }) {
@@ -43,7 +44,7 @@ function FormCartao({ cartao, nomeInicial = '', onConcluir }) {
       }
       onConcluir()
     } catch (error) {
-      setErro(error.message)
+      setErro(mensagemErro(error))
       setSalvando(false)
     }
   }

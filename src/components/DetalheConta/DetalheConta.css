@@ -99,3 +99,8 @@
     text-align: right;
     overflow-wrap: anywhere;
 }
+
+.detalhe-erro {
+    color: var(--cor-negativo);
+    font-size: .875rem;
+}

@@ -109,6 +109,16 @@ button:disabled {
     opacity: .45;
 }
 
+/* Ícone de carregamento em botões enquanto a ação é processada. */
+.girando {
+    flex-shrink: 0;
+    animation: girar .8s linear infinite;
+}
+
+@keyframes girar {
+    to { transform: rotate(360deg); }
+}
+
 .botao-primario {
     background: var(--cor-primaria);
     color: var(--cor-sobre-primaria);

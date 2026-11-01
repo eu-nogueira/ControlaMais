@@ -1,6 +1,7 @@
 import './Home.css'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { App } from '@capacitor/app'
 import { MdAdd, MdCalculate, MdChevronRight, MdPeopleAlt, MdReceiptLong, MdRemove } from 'react-icons/md'
 import Cabecalho from '../components/Cabecalho/Cabecalho'
 import Saldo from '../components/Saldo/Saldo'
@@ -17,10 +18,12 @@ import DetalheConta from '../components/DetalheConta/DetalheConta'
 import MinhaConta from '../components/MinhaConta/MinhaConta'
 import Notificacoes from '../components/Notificacoes/Notificacoes'
 import Tutorial from '../components/Tutorial/Tutorial'
+import Atualizacao from '../components/Atualizacao/Atualizacao'
 import { PASSOS_GERAL, PASSOS_SIMULACAO } from '../components/Tutorial/passos'
 import { limparErro } from '../store/extrato'
 import { limparErroCartoes } from '../store/cartoes'
 import supabase from '../services/supabase'
+import { buscarAtualizacao } from '../services/atualizacao'
 import { gravarNotificacoesLidas, lerNotificacoesLidas } from '../services/notificacoesLidas'
 import { gerarNotificacoes } from '../utils/notificacoes'
 import useHoje from '../hooks/useHoje'
@@ -51,6 +54,8 @@ function Home({ saudacao, usuario }) {
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(null)
   const [tutorialEscolhido, setTutorialEscolhido] = useState(null)
   const [tutoriaisVistos, setTutoriaisVistos] = useState(() => usuario.user_metadata?.tutoriais ?? {})
+  const [atualizacao, setAtualizacao] = useState(null)
+  const [atualizacaoAdiada, setAtualizacaoAdiada] = useState(null)
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const carregando = useSelector((state) => state.extrato.carregando)
   const erro = useSelector((state) => state.extrato.erro)
@@ -67,6 +72,21 @@ function Home({ saudacao, usuario }) {
   }
   const fecharMinhaConta = useCallback(() => setMinhaContaAberta(false), [])
   const fecharNotificacoes = useCallback(() => setNotificacoesAbertas(null), [])
+
+  // Procura nova versão ao abrir e sempre que o app volta para o primeiro plano.
+  // Falha na verificação não impede o uso: tenta de novo na próxima vez.
+  useEffect(() => {
+    const verificar = () => buscarAtualizacao().then(setAtualizacao).catch(() => {})
+    verificar()
+    const ouvinte = App.addListener('resume', verificar)
+    return () => {
+      ouvinte.then((handle) => handle.remove())
+    }
+  }, [])
+
+  // "Agora não" adia a versão até o app ser aberto de novo; a obrigatória não pode ser adiada.
+  const atualizacaoAberta = atualizacao && (atualizacao.obrigatoria || atualizacao.codigo_versao !== atualizacaoAdiada) ? atualizacao : null
+  const adiarAtualizacao = useCallback(() => setAtualizacaoAdiada(atualizacao?.codigo_versao ?? null), [atualizacao])
 
   // Cada tutorial abre sozinho uma vez: o geral no primeiro acesso e o da simulação na primeira
   // visita ao módulo. Depois só abre quando pedido (Minha conta ou "Como funciona" na Simulação).
@@ -229,6 +249,12 @@ function Home({ saudacao, usuario }) {
       {tutorialAberto && (
         <Modal titulo={TUTORIAIS[tutorialAberto].titulo} onFechar={fecharTutorial}>
           <Tutorial key={tutorialAberto} passos={TUTORIAIS[tutorialAberto].passos} onConcluir={fecharTutorial} />
+        </Modal>
+      )}
+
+      {atualizacaoAberta && (
+        <Modal titulo='Atualização disponível' onFechar={adiarAtualizacao} fixo={atualizacaoAberta.obrigatoria}>
+          <Atualizacao key={atualizacaoAberta.codigo_versao} versao={atualizacaoAberta} onAdiar={adiarAtualizacao} />
         </Modal>
       )}
     </div>
