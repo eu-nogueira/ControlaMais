@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { formatarMes } from '../../utils/mes'
 import { projetarDisponivel } from '../../utils/simulacao'
@@ -52,14 +52,26 @@ function Projecao({ contas, mesAtual }) {
   const [periodo, setPeriodo] = useState(6)
   const [largura, setLargura] = useState(LARGURA_PADRAO)
   const [ativo, setAtivo] = useState(null)
+  const grafico = useRef(null)
 
   // Mede a largura disponível para desenhar o SVG em pixels reais (textos sem distorção).
   const medir = useCallback((elemento) => {
+    grafico.current = elemento
     if (!elemento) return undefined
     const observador = new ResizeObserver(([entrada]) => setLargura(Math.max(entrada.contentRect.width, 280)))
     observador.observe(elemento)
     return () => observador.disconnect()
   }, [])
+
+  // No toque, a caixinha do mês continua aberta ao soltar o dedo e fecha ao tocar fora do gráfico.
+  useEffect(() => {
+    if (ativo === null) return undefined
+    function fecharFora(event) {
+      if (grafico.current && !grafico.current.contains(event.target)) setAtivo(null)
+    }
+    document.addEventListener('pointerdown', fecharFora)
+    return () => document.removeEventListener('pointerdown', fecharFora)
+  }, [ativo])
 
   const formatar = (valor) => formatarMoeda(valor)
   const { renda, mesesRenda, pontos } = projetarDisponivel(contas, mesAtual, periodo)
@@ -154,7 +166,8 @@ function Projecao({ contas, mesAtual }) {
           tabIndex={0}
           onPointerMove={apontar}
           onPointerDown={apontar}
-          onPointerLeave={() => setAtivo(null)}
+          onPointerLeave={(event) => event.pointerType === 'mouse' && setAtivo(null)}
+          onContextMenu={(event) => event.preventDefault()}
           onKeyDown={navegar}
           onBlur={() => setAtivo(null)}
         >
