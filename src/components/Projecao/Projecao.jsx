@@ -44,8 +44,8 @@ function tendencia(pontos, renda, formatar) {
   const final = formatarMes(pontos.at(-1).mes).toLowerCase()
   if (Math.abs(diferenca) <= renda * LIMITE_ESTAVEL) return `A sobra fica estável em cerca de ${formatar(ultimo)} por mês até ${final}.`
   return diferenca > 0
-    ? `A sobra aumenta ${formatar(diferenca)}: de ${formatar(primeiro)} para ${formatar(ultimo)} por mês em ${final}.`
-    : `A sobra diminui ${formatar(-diferenca)}: de ${formatar(primeiro)} para ${formatar(ultimo)} por mês em ${final}.`
+    ? `A sobra irá aumentar ${formatar(diferenca)}: de ${formatar(primeiro)} que sobra atualmente irá para ${formatar(ultimo)} por mês em ${final}.`
+    : `A sobra irá diminuir ${formatar(-diferenca)}: de ${formatar(primeiro)} que sobra atualmente irá para ${formatar(ultimo)} por mês em ${final}.`
 }
 
 function Projecao({ contas, mesAtual }) {
