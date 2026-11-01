@@ -23,6 +23,33 @@
     font-weight: 600;
 }
 
+.minha-conta-segmento {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--cor-superficie-2);
+}
+
+.minha-conta-segmento button {
+    min-height: 40px;
+    padding: .5rem;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--cor-texto-suave);
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.minha-conta-segmento .minha-conta-segmento-ativo {
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+    color: var(--cor-primaria);
+}
+
 .minha-conta-campo {
     display: flex;
     flex-direction: column;

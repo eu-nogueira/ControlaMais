@@ -1,0 +1,286 @@
+/* Usa as cores de série do Dashboard (--serie-1 e --serie-2), validadas para daltonismo
+   nos dois temas. A renda é linha de referência neutra e tracejada. */
+.projecao {
+    min-width: 0;
+    --projecao-sobra: var(--serie-1);
+    --projecao-parcelas: var(--serie-2);
+    --projecao-renda: var(--cor-texto-suave);
+
+    display: flex;
+    flex-direction: column;
+    gap: .875rem;
+    padding: 1.25rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+/* Itens flex não encolhem abaixo do conteúdo por padrão: sem isso a tabela alarga o card. */
+.projecao > * {
+    min-width: 0;
+}
+
+.projecao-cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.projecao-cabecalho h2 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.projecao-cabecalho p,
+.projecao-nota {
+    margin-top: .125rem;
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+}
+
+.projecao-periodos {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--cor-superficie-2);
+}
+
+.projecao-periodos button {
+    min-height: 36px;
+    padding: .375rem .625rem;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.projecao-periodos .projecao-periodo-ativo {
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+    color: var(--cor-primaria);
+}
+
+.projecao-resumo {
+    font-size: .9375rem;
+    font-weight: 500;
+}
+
+.projecao-vazio {
+    padding: 1.5rem 0;
+    color: var(--cor-texto-suave);
+    font-size: .875rem;
+    text-align: center;
+}
+
+.projecao-legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .375rem 1rem;
+    margin: 0;
+    padding: 0;
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+    list-style: none;
+}
+
+.projecao-legenda li {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+}
+
+.projecao-legenda-marca {
+    width: 16px;
+    height: 0;
+    border-top: 2px solid;
+}
+
+.projecao-legenda-marca.projecao-serie-sobra {
+    border-color: var(--projecao-sobra);
+}
+
+.projecao-legenda-marca.projecao-serie-parcelas {
+    border-color: var(--projecao-parcelas);
+}
+
+.projecao-legenda-marca.projecao-serie-renda {
+    border-top-style: dashed;
+    border-color: var(--projecao-renda);
+}
+
+.projecao-grafico {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+/* Fora do fluxo: a largura vem do card, e o SVG é desenhado com a largura medida. */
+.projecao-grafico svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    overflow: visible;
+    touch-action: pan-y;
+}
+
+.projecao-grafico svg:focus-visible {
+    outline: 2px solid var(--cor-primaria);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+.projecao-grade {
+    stroke: var(--cor-borda);
+    stroke-width: 1;
+}
+
+.projecao-zero {
+    stroke: var(--cor-texto-suave);
+    stroke-width: 1;
+}
+
+.projecao-eixo {
+    fill: var(--cor-texto-suave);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.projecao-cursor {
+    stroke: var(--cor-texto-suave);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+.projecao-linha {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.projecao-linha.projecao-serie-sobra {
+    stroke: var(--projecao-sobra);
+}
+
+.projecao-linha.projecao-serie-parcelas {
+    stroke: var(--projecao-parcelas);
+}
+
+.projecao-linha.projecao-serie-renda {
+    stroke: var(--projecao-renda);
+    stroke-dasharray: 6 4;
+    stroke-width: 1.5;
+}
+
+/* Anel na cor da superfície separa o marcador das linhas que cruzam. */
+.projecao-marcador {
+    stroke: var(--cor-superficie);
+    stroke-width: 2;
+}
+
+.projecao-marcador.projecao-serie-sobra {
+    fill: var(--projecao-sobra);
+}
+
+.projecao-marcador.projecao-serie-parcelas {
+    fill: var(--projecao-parcelas);
+}
+
+.projecao-dica {
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
+    width: 200px;
+    padding: .625rem .75rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra-elevada);
+    font-size: .8125rem;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.projecao-dica dl {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+    margin: 0;
+}
+
+.projecao-dica dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.projecao-dica dt {
+    color: var(--cor-texto-suave);
+}
+
+.projecao-dica dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.projecao-dica-total {
+    padding-top: .25rem;
+    border-top: 1px solid var(--cor-borda);
+    font-weight: 600;
+}
+
+.projecao-dica small {
+    color: var(--cor-texto-suave);
+}
+
+.projecao-tabela summary {
+    color: var(--cor-primaria);
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.projecao-tabela-rolagem {
+    margin-top: .75rem;
+    overflow-x: auto;
+}
+
+.projecao-tabela table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8125rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.projecao-tabela th,
+.projecao-tabela td {
+    padding: .5rem;
+    border-bottom: 1px solid var(--cor-borda);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.projecao-tabela th:first-child,
+.projecao-tabela thead th:first-child {
+    text-align: left;
+}
+
+.projecao-tabela thead th {
+    color: var(--cor-texto-suave);
+    font-weight: 600;
+}
+
+.projecao-tabela tbody th {
+    font-weight: 500;
+}

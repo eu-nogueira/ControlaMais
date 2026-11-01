@@ -13,6 +13,11 @@ export function lerValor(texto) {
   return Number(valor)
 }
 
+// Enumeração em português: "a", "a e b", "a, b e c".
+const formatoLista = new Intl.ListFormat('pt-BR', { style: 'long', type: 'conjunction' })
+
+export const juntarLista = (itens) => formatoLista.format(itens)
+
 export function formatarDataISO(dataISO) {
   if (!dataISO) return ''
   const [ano, mes, dia] = dataISO.split('-')

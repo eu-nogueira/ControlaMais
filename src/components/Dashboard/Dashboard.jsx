@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { MdChevronLeft, MdChevronRight } from 'react-icons/md'
 import GraficoPizza from '../GraficoPizza/GraficoPizza'
+import Projecao from '../Projecao/Projecao'
 import { dadosDashboard, ultimoMesComDespesa } from '../../utils/dashboard'
 import { formatarMoeda } from '../../utils/formatar'
 import { PRIMEIRO_MES, deslocarMes, formatarMes } from '../../utils/mes'
@@ -71,6 +72,8 @@ function Dashboard({ ocultar }) {
           ocultar={ocultar}
         />
       </div>
+
+      <Projecao contas={contas} mesAtual={mesAtual} />
     </div>
   )
 }

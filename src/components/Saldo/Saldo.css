@@ -7,6 +7,49 @@
     opacity: .8;
 }
 
+.saldo-rotulo-linha {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+.saldo-info {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin: -6px 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    opacity: .8;
+}
+
+.saldo-info:hover,
+.saldo-info[aria-expanded='true'] {
+    background: rgba(255, 255, 255, .15);
+    opacity: 1;
+}
+
+.saldo-base {
+    margin-top: .25rem;
+    font-size: .75rem;
+    opacity: .75;
+}
+
+.saldo-explicacao {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin-top: .75rem;
+    padding: .75rem .875rem;
+    border-radius: var(--raio-pequeno);
+    background: rgba(255, 255, 255, .12);
+    font-size: .8125rem;
+    line-height: 1.45;
+}
+
 .saldo-valor {
     margin-top: .25rem;
     font-size: 2rem;
@@ -17,12 +60,6 @@
 
 .saldo-valor-negativo {
     color: #ffb4ab;
-}
-
-.saldo-sobra {
-    margin-top: .25rem;
-    font-size: .75rem;
-    opacity: .75;
 }
 
 .saldo-quitar {

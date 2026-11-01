@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdCompareArrows, MdContentCopy, MdDeleteOutline, MdEmojiEvents, MdFolderOpen, MdHistory } from 'react-icons/md'
+import { MdCompareArrows, MdContentCopy, MdDeleteOutline, MdEmojiEvents, MdFolderOpen, MdHistory, MdInfoOutline } from 'react-icons/md'
 import { carregarSimulacoes, removerSimulacao } from '../../store/simulacoes'
-import { cenarioAtual, escolherMelhorCenario, simularEntrada } from '../../utils/simulacao'
-import { formatarMoeda } from '../../utils/formatar'
+import { cenarioAtual, descreverRecurso, escolherMelhorCenario, simularEntrada } from '../../utils/simulacao'
+import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import useMesAtual from '../../hooks/useMesAtual'
 import { VEREDITOS } from '../Simulacao/vereditos'
 import './SimulacoesSalvas.css'
@@ -17,6 +17,8 @@ const formatarData = (iso) => new Intl.DateTimeFormat('pt-BR', { dateStyle: 'sho
 function descreverAcao({ descricao, acao, quantidade }) {
   return acao === 'quitar' ? `Quitar ${descricao}` : `Antecipar ${quantidade} de ${descricao}`
 }
+
+const descreverCompra = ({ descricao, valor }, formatar) => `${descricao} (${formatar(valor)})`
 
 function SeloVeredito({ veredito }) {
   const info = VEREDITOS[veredito]
@@ -54,26 +56,43 @@ function ItemSalvo({ simulacao, aberta, selecionada, podeSelecionar, ocultar, on
 
       <dl className='salvas-item-dados'>
         <div>
-          <dt>Empréstimo</dt>
-          <dd>{formatar(resumo.emprestimo.valor)} em {resumo.emprestimo.parcelas} × {formatar(resumo.emprestimo.valorParcela)}</dd>
+          <dt>{resumo.emprestimo.futuro ? 'Valor a receber' : 'Empréstimo'}</dt>
+          <dd>
+            {resumo.emprestimo.futuro
+              ? descreverRecurso(resumo.emprestimo, formatar)
+              : `${formatar(resumo.emprestimo.valor)} em ${resumo.emprestimo.parcelas} × ${formatar(resumo.emprestimo.valorParcela)}`}
+          </dd>
         </div>
         <div>
           <dt>Parcelas do mês</dt>
           <dd>{formatar(resumo.parcelasMesAntes)} → {formatar(resumo.parcelasMesDepois)}</dd>
         </div>
-        <div>
-          <dt>Economia líquida</dt>
-          <dd className={resumo.atingeMeta ? 'valor-positivo' : 'valor-negativo'}>
-            {formatar(resumo.economiaLiquida)}/mês (meta {formatar(resumo.meta)})
-          </dd>
-        </div>
+        {resumo.emprestimo.futuro ? (
+          <div>
+            <dt>Economia por mês</dt>
+            <dd>{formatar(resumo.economiaMensal)}</dd>
+          </div>
+        ) : (
+          <div>
+            <dt>Economia líquida</dt>
+            <dd className={resumo.atingeMeta ? 'valor-positivo' : 'valor-negativo'}>
+              {formatar(resumo.economiaLiquida)}/mês (meta {formatar(resumo.meta)})
+            </dd>
+          </div>
+        )}
+        {resumo.compras?.length > 0 && (
+          <div>
+            <dt>Compras simuladas</dt>
+            <dd>{resumo.compras.map((compra) => descreverCompra(compra, formatar)).join('; ')}</dd>
+          </div>
+        )}
         <div>
           <dt>Escolhas</dt>
           <dd>{resumo.acoes.length > 0 ? resumo.acoes.map(descreverAcao).join('; ') : 'Nenhuma dívida quitada ou antecipada'}</dd>
         </div>
         {resumo.recomendada && (
           <div>
-            <dt>Alternativa recomendada</dt>
+            <dt>{resumo.emprestimo.futuro ? 'Combinação sugerida' : 'Alternativa recomendada'}</dt>
             <dd>{resumo.recomendada}</dd>
           </div>
         )}
@@ -103,7 +122,8 @@ function ItemSalvo({ simulacao, aberta, selecionada, podeSelecionar, ocultar, on
   )
 }
 
-// Recalcula as simulações escolhidas com os dados atuais e compara com não contratar.
+// Recalcula as simulações escolhidas com os dados atuais e compara com manter como está.
+// Valores a receber não têm veredito nem meta: aparecem só com os números.
 function Comparacao({ simulacoes, ocultar }) {
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const fechamento = useSelector((state) => state.extrato.fechamento)
@@ -121,13 +141,18 @@ function Comparacao({ simulacoes, ocultar }) {
   const linhas = [
     {
       rotulo: 'Resultado',
-      valores: cenarios.map(({ resultado }) => <SeloVeredito key='v' veredito={resultado.veredito} />),
+      valores: cenarios.map(({ resultado }) => (resultado.veredito ? <SeloVeredito key='v' veredito={resultado.veredito} /> : '—')),
       atual: 'Situação atual'
     },
     {
-      rotulo: 'Empréstimo',
-      valores: cenarios.map(({ emprestimo }) => `${formatar(emprestimo.valor)} em ${emprestimo.parcelas}x`),
-      atual: 'Nenhum'
+      rotulo: 'Origem do dinheiro',
+      valores: cenarios.map(({ emprestimo }) => (emprestimo.valido ? descreverRecurso(emprestimo, formatar) : 'Dados inválidos')),
+      atual: 'Nenhuma'
+    },
+    {
+      rotulo: 'Compras simuladas',
+      valores: cenarios.map(({ compras }) => (compras.length > 0 ? compras.map((compra) => descreverCompra(compra, formatar)).join('; ') : '—')),
+      atual: '—'
     },
     {
       rotulo: 'Parcelas do mês',
@@ -136,18 +161,21 @@ function Comparacao({ simulacoes, ocultar }) {
     },
     {
       rotulo: 'Economia líquida por mês',
-      valores: cenarios.map(({ resultado }) => (
-        <span key='e' className={resultado.resumo.atingeMeta ? 'valor-positivo' : 'valor-negativo'}>{formatar(resultado.resumo.economiaLiquida)}</span>
+      valores: cenarios.map(({ emprestimo, resultado }) => (emprestimo.futuro
+        ? formatar(resultado.resumo.economiaLiquida)
+        : <span key='e' className={resultado.resumo.atingeMeta ? 'valor-positivo' : 'valor-negativo'}>{formatar(resultado.resumo.economiaLiquida)}</span>
       )),
       atual: formatar(0)
     },
     {
       rotulo: 'Meta de liberação',
-      valores: cenarios.map(({ resultado }) => `${formatar(resultado.resumo.meta)} (${formatarPercentual(resultado.resumo.percentualMeta)}) · ${resultado.resumo.atingeMeta ? 'atinge' : 'não atinge'}`),
+      valores: cenarios.map(({ emprestimo, resultado }) => (emprestimo.futuro
+        ? '—'
+        : `${formatar(resultado.resumo.meta)} (${formatarPercentual(resultado.resumo.percentualMeta)}) · ${resultado.resumo.atingeMeta ? 'atinge' : 'não atinge'}`)),
       atual: '—'
     },
     {
-      rotulo: 'Custo do empréstimo',
+      rotulo: 'Custo (juros)',
       valores: cenarios.map(({ emprestimo }) => formatar(emprestimo.custo)),
       atual: formatar(0)
     },
@@ -158,13 +186,16 @@ function Comparacao({ simulacoes, ocultar }) {
     },
     {
       rotulo: 'Riscos',
-      valores: cenarios.map(({ resultado }) => resultado.riscos.length),
+      valores: cenarios.map(({ resultado }) => resultado.riscos?.length ?? '—'),
       atual: '—'
     },
   ]
 
+  const comEmprestimo = cenarios.some(({ emprestimo }) => !emprestimo.futuro)
   let conclusao
-  if (melhor) {
+  if (!comEmprestimo) {
+    conclusao = 'Simulações de valor a receber não recebem avaliação: compare os números acima para decidir como usar o dinheiro.'
+  } else if (melhor) {
     const { resultado, emprestimo } = melhor
     conclusao = `${melhor.letra}. ${melhor.simulacao.nome} é o melhor cenário: ${VEREDITOS[resultado.veredito].rotulo.toLowerCase()}, `
       + `libera ${formatar(resultado.resumo.economiaLiquida)} por mês (meta de ${formatar(resultado.resumo.meta)}) `
@@ -172,7 +203,7 @@ function Comparacao({ simulacoes, ocultar }) {
       + `com custo de ${formatar(emprestimo.custo)} no empréstimo.`
       + (resultado.riscos.length > 0 ? ` Atenção a ${resultado.riscos.length === 1 ? '1 risco' : `${resultado.riscos.length} riscos`} apontado(s) na simulação.` : '')
   } else {
-    conclusao = 'Nenhum dos cenários comparados atinge a meta de liberação mensal com segurança. O melhor resultado é não contratar o empréstimo e manter os pagamentos atuais.'
+    conclusao = 'Nenhum dos empréstimos comparados atinge a meta de liberação mensal com segurança. O melhor resultado é não contratar e manter os pagamentos atuais.'
   }
 
   const ausentes = cenarios.filter((cenario) => cenario.dividasAusentes.length > 0)
@@ -192,8 +223,8 @@ function Comparacao({ simulacoes, ocultar }) {
                   <span className='salvas-letra'>{cenario.letra}</span>{cenario.simulacao.nome}
                 </th>
               ))}
-              <th scope='col' className={!melhor ? 'salvas-coluna-melhor' : ''}>
-                <span className='salvas-letra'>{String.fromCharCode(65 + cenarios.length)}</span>Não contratar
+              <th scope='col' className={comEmprestimo && !melhor ? 'salvas-coluna-melhor' : ''}>
+                <span className='salvas-letra'>{String.fromCharCode(65 + cenarios.length)}</span>Manter como está
               </th>
             </tr>
           </thead>
@@ -204,7 +235,7 @@ function Comparacao({ simulacoes, ocultar }) {
                 {linha.valores.map((valor, indice) => (
                   <td key={cenarios[indice].simulacao.id} className={melhor === cenarios[indice] ? 'salvas-coluna-melhor' : ''}>{valor}</td>
                 ))}
-                <td className={!melhor ? 'salvas-coluna-melhor' : ''}>{linha.atual}</td>
+                <td className={comEmprestimo && !melhor ? 'salvas-coluna-melhor' : ''}>{linha.atual}</td>
               </tr>
             ))}
           </tbody>
@@ -212,16 +243,18 @@ function Comparacao({ simulacoes, ocultar }) {
       </div>
 
       <p className='salvas-conclusao'>
-        <MdEmojiEvents size={20} aria-hidden='true' />
+        {comEmprestimo ? <MdEmojiEvents size={20} aria-hidden='true' /> : <MdInfoOutline size={20} aria-hidden='true' />}
         <span>{conclusao}</span>
       </p>
-      <p className='salvas-dica'>
-        Critério: só vale contratar se o resultado for "Vantajoso" ou "Exige cautela"; entre eles, vence o de melhor resultado,
-        depois a maior economia líquida por mês e, por fim, o menor total ainda a pagar.
-      </p>
+      {comEmprestimo && (
+        <p className='salvas-dica'>
+          Critério para empréstimos: só vale contratar se o resultado for "Vantajoso" ou "Exige cautela"; entre eles, vence o de melhor resultado,
+          depois a maior economia líquida por mês e, por fim, o menor total ainda a pagar.
+        </p>
+      )}
       {ausentes.length > 0 && (
         <p className='salvas-dica'>
-          Algumas dívidas não existem mais e foram desconsideradas: {ausentes.map((cenario) => `${cenario.letra} (${cenario.dividasAusentes.join(', ')})`).join('; ')}.
+          Algumas dívidas não existem mais e foram desconsideradas: {ausentes.map((cenario) => `${cenario.letra} (${juntarLista(cenario.dividasAusentes)})`).join('; ')}.
         </p>
       )}
     </section>
@@ -264,7 +297,7 @@ function SimulacoesSalvas({ ocultar, rascunhoId, onAbrir, onDuplicar }) {
 
   return (
     <div className='salvas'>
-      <p className='salvas-dica'>Marque até {MAXIMO_COMPARACAO} simulações em "Comparar" para ver lado a lado com não contratar o empréstimo.</p>
+      <p className='salvas-dica'>Marque até {MAXIMO_COMPARACAO} simulações em "Comparar" para ver lado a lado com manter tudo como está.</p>
 
       {escolhidas.length > 0 && <Comparacao simulacoes={escolhidas} ocultar={ocultar} />}
 

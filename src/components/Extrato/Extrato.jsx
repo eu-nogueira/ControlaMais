@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { MdChevronLeft, MdChevronRight, MdNorthEast, MdReceiptLong, MdSouthWest } from 'react-icons/md'
+import { MdChevronLeft, MdChevronRight, MdClose, MdNorthEast, MdReceiptLong, MdSouthWest } from 'react-icons/md'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
 import { PRIMEIRO_MES, deslocarData, deslocarMes, formatarMes, mesesEntre } from '../../utils/mes'
 import { ultimoMesComDespesa } from '../../utils/dashboard'
@@ -45,10 +45,16 @@ function itensDoMes(contas, mes) {
     .sort((a, b) => b.data.localeCompare(a.data))
 }
 
+function ultimoDiaDo(mes) {
+  const [ano, numeroMes] = mes.split('-').map(Number)
+  return `${mes}-${String(new Date(ano, numeroMes, 0).getDate()).padStart(2, '0')}`
+}
+
 function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
   const contas = useSelector((state) => state.extrato.contasExtrato) || []
   const [filtro, setFiltro] = useState('Todos')
   const [mesEscolhido, setMesEscolhido] = useState(null)
+  const [dataEscolhida, setDataEscolhida] = useState('')
   const mesAtual = useMesAtual()
 
   // Inclui os meses futuros que ainda têm parcela prevista.
@@ -63,7 +69,16 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
   function navegarMes(quantidade) {
     const novoMes = deslocarMes(mes, quantidade)
     setMesEscolhido(novoMes === mesAtual ? null : novoMes)
+    setDataEscolhida('')
   }
+
+  // Escolher uma data leva ao mês dela e mostra só as movimentações daquele dia.
+  function escolherData(data) {
+    setDataEscolhida(data)
+    if (data) setMesEscolhido(data.slice(0, 7) === mesAtual ? null : data.slice(0, 7))
+  }
+
+  const filtrandoData = comFiltro && dataEscolhida.slice(0, 7) === mes
 
   const itens = comFiltro
     ? itensDoMes(contas, mes)
@@ -71,6 +86,7 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
 
   const itensFiltrados = itens
     .filter(({ conta }) => filtro === 'Todos' || conta.tipoConta === filtro)
+    .filter(({ data }) => !filtrandoData || data === dataEscolhida)
     .slice(0, limite)
 
   const grupos = agruparPorData(itensFiltrados)
@@ -86,6 +102,26 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
           <button onClick={() => navegarMes(1)} disabled={mes >= ultimoMes} aria-label='Próximo mês'>
             <MdChevronRight size={24} />
           </button>
+        </div>
+      )}
+
+      {comFiltro && (
+        <div className='extrato-busca-data'>
+          <label>
+            <span>Filtrar por data</span>
+            <input
+              type='date'
+              min={`${PRIMEIRO_MES}-01`}
+              max={ultimoDiaDo(ultimoMes)}
+              value={filtrandoData ? dataEscolhida : ''}
+              onChange={(e) => escolherData(e.target.value)}
+            />
+          </label>
+          {filtrandoData && (
+            <button type='button' onClick={() => setDataEscolhida('')} aria-label='Limpar filtro de data'>
+              <MdClose size={20} />
+            </button>
+          )}
         </div>
       )}
 
@@ -108,7 +144,11 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
       {grupos.length === 0 ? (
         <div className='extrato-vazio'>
           <MdReceiptLong size={40} />
-          <p>{comFiltro ? `Nenhuma movimentação em ${formatarMes(mes).toLowerCase()}.` : 'Ainda não há registros aqui.'}</p>
+          <p>
+            {!comFiltro
+              ? 'Ainda não há registros aqui.'
+              : `Nenhuma movimentação em ${filtrandoData ? formatarDataISO(dataEscolhida) : formatarMes(mes).toLowerCase()}.`}
+          </p>
           <span>Suas movimentações aparecerão nesta lista.</span>
         </div>
       ) : (

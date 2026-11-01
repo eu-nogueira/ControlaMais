@@ -1,17 +1,15 @@
 .simulacao {
-    --cor-alerta: #b54708;
-    --cor-alerta-fundo: #fef0c7;
+    --cor-alerta: #fdb022;
+    --cor-alerta-fundo: #2e2109;
 
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-    .simulacao {
-        --cor-alerta: #fdb022;
-        --cor-alerta-fundo: #2e2109;
-    }
+[data-tema='claro'] .simulacao {
+    --cor-alerta: #b54708;
+    --cor-alerta-fundo: #fef0c7;
 }
 
 .simulacao-editor {
@@ -82,6 +80,31 @@
     font-weight: 600;
 }
 
+.simulacao-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.simulacao-topo .simulacao-aviso {
+    flex: 1 1 240px;
+}
+
+.simulacao-ajuda {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: .375rem;
+    padding: .5rem .875rem;
+    border: 1px solid var(--cor-primaria);
+    border-radius: 999px;
+    background: var(--cor-superficie);
+    color: var(--cor-primaria);
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
 .simulacao-aviso {
     display: flex;
     align-items: center;
@@ -123,9 +146,14 @@
     font-size: .8125rem;
 }
 
-.simulacao-linha-tres {
+.simulacao-linha-tres,
+.simulacao-linha-dois {
     display: grid;
     gap: .75rem;
+}
+
+.simulacao-linha-dois {
+    grid-template-columns: 1.3fr 1fr;
 }
 
 .simulacao-linha-tres {
@@ -155,7 +183,8 @@
     font-size: .75rem;
 }
 
-.simulacao-campo input {
+.simulacao-campo input,
+.simulacao-campo select {
     width: 100%;
     min-height: 48px;
     padding: .75rem .875rem;
@@ -165,7 +194,8 @@
     font-size: 1rem;
 }
 
-.simulacao-campo input:focus {
+.simulacao-campo input:focus,
+.simulacao-campo select:focus {
     border-color: var(--cor-primaria);
     outline: 3px solid var(--cor-primaria-suave);
     outline-offset: 0;
@@ -189,6 +219,10 @@
     padding: .75rem;
     border-radius: var(--raio-pequeno);
     background: var(--cor-superficie-2);
+}
+
+.simulacao-calculos-dois {
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .simulacao-resumo {
@@ -330,6 +364,102 @@
 
 .simulacao-recomendacoes li span.valor-positivo {
     color: var(--cor-positivo);
+}
+
+.simulacao-ferias {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 1rem;
+    border: 1px solid var(--cor-primaria);
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-primaria-suave);
+    font-size: .875rem;
+}
+
+.simulacao-ferias h3 {
+    font-size: .9375rem;
+    font-weight: 600;
+}
+
+.simulacao-ferias-valor {
+    display: flex;
+    flex-direction: column;
+}
+
+.simulacao-ferias-valor small {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
+.simulacao-ferias-valor strong {
+    color: var(--cor-primaria);
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.simulacao-ferias-composicao {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin: 0;
+}
+
+.simulacao-ferias-composicao div {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.simulacao-ferias-composicao dt {
+    color: var(--cor-texto-suave);
+}
+
+.simulacao-ferias-composicao dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.simulacao-ferias-notas {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    margin: 0;
+    padding-left: 1.125rem;
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+}
+
+.simulacao-ferias-proximo {
+    padding-top: .75rem;
+    border-top: 1px solid var(--cor-borda);
+    font-weight: 500;
+}
+
+.simulacao-compra-rodape {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.simulacao-compra-rodape small {
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+}
+
+.simulacao-compra-rodape .simulacao-nova,
+.simulacao-adicionar {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+.simulacao-adicionar {
+    align-self: flex-start;
 }
 
 .simulacao-dividas {

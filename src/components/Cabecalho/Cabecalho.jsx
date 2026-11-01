@@ -23,15 +23,18 @@ function Cabecalho({ titulo, saudacao, ocultar, notificacoesNovas = 0, onAlterna
               <span className='cabecalho-badge' aria-hidden='true'>{notificacoesNovas > 9 ? '9+' : notificacoesNovas}</span>
             )}
           </button>
-          <button
-            className='cabecalho-botao'
-            onClick={onAlternarOcultar}
-            aria-pressed={ocultar}
-            aria-label={ocultar ? 'Mostrar valores' : 'Ocultar valores'}
-            title={ocultar ? 'Mostrar valores' : 'Ocultar valores'}
-          >
-            {ocultar ? <MdVisibilityOff size={22} /> : <MdVisibility size={22} />}
-          </button>
+          {/* Ocultar vale só para o resumo do cabeçalho (saldo), exibido na tela Início. */}
+          {children && (
+            <button
+              className='cabecalho-botao'
+              onClick={onAlternarOcultar}
+              aria-pressed={ocultar}
+              aria-label={ocultar ? 'Mostrar saldo' : 'Ocultar saldo'}
+              title={ocultar ? 'Mostrar saldo' : 'Ocultar saldo'}
+            >
+              {ocultar ? <MdVisibilityOff size={22} /> : <MdVisibility size={22} />}
+            </button>
+          )}
           <button className='cabecalho-botao' onClick={onSair} aria-label='Sair' title='Sair'>
             <MdLogout size={22} />
           </button>

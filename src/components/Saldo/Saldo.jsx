@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { MdArrowDownward, MdArrowUpward, MdTaskAlt } from 'react-icons/md'
+import { MdArrowDownward, MdArrowUpward, MdInfoOutline, MdTaskAlt } from 'react-icons/md'
 import { quitarMesesAnteriores } from '../../store/extrato'
-import { formatarMoeda } from '../../utils/formatar'
+import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { formatarMes } from '../../utils/mes'
-import { calcularPeriodo, mesesParaFechar, simularFechamento } from '../../utils/saldo'
+import { calcularPeriodo, mesesParaFechar } from '../../utils/saldo'
 import useMesAtual from '../../hooks/useMesAtual'
 import './Saldo.css'
 
@@ -13,18 +13,16 @@ function Saldo({ ocultar }) {
     const fechamento = useSelector((state) => state.extrato.fechamento)
     const [confirmarQuitacao, setConfirmarQuitacao] = useState(false)
     const [quitando, setQuitando] = useState(false)
+    const [explicacaoAberta, setExplicacaoAberta] = useState(false)
     const mesAtual = useMesAtual()
     const dispatch = useDispatch()
 
-    const { saldoInicial, receitas: receitaMes, despesas: despesaMes, saldo } = calcularPeriodo(contas, fechamento)
+    const { receitas: receitaMes, despesas: despesaMes, saldo } = calcularPeriodo(contas, fechamento)
     const porcentagemComprometimento = receitaMes > 0 ? (despesaMes / receitaMes) * 100 : 0
     const larguraBarra = Math.min(porcentagemComprometimento, 100)
 
     const mesesAbertos = mesesParaFechar(contas, fechamento, mesAtual)
-    const sobra = mesesAbertos.length > 0
-        ? simularFechamento(contas, fechamento, mesesAbertos).fechamentos.at(-1).saldo
-        : 0
-    const nomeMeses = mesesAbertos.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()).join(', ')
+    const nomeMeses = juntarLista(mesesAbertos.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()))
 
     async function handleQuitar() {
         if (!confirmarQuitacao) {
@@ -39,12 +37,40 @@ function Saldo({ ocultar }) {
 
   return (
     <section className='saldo' aria-label='Resumo do saldo'>
-        <p className='saldo-rotulo'>Saldo disponível</p>
+        <div className='saldo-rotulo-linha'>
+            <p className='saldo-rotulo'>Saldo disponível</p>
+            <button
+                type='button'
+                className='saldo-info'
+                onClick={() => setExplicacaoAberta(!explicacaoAberta)}
+                aria-expanded={explicacaoAberta}
+                aria-controls='saldo-explicacao'
+                aria-label='Como o saldo disponível é calculado'
+                title='Como o saldo disponível é calculado'
+            >
+                <MdInfoOutline size={18} />
+            </button>
+        </div>
         <p className={`saldo-valor ${saldo < 0 ? 'saldo-valor-negativo' : ''}`}>
             {formatarMoeda(saldo, ocultar)}
         </p>
-        {saldoInicial !== 0 && (
-            <p className='saldo-sobra'>Inclui {formatarMoeda(saldoInicial, ocultar)} que sobraram de {formatarMes(fechamento.mes).toLowerCase()}</p>
+        <p className='saldo-base'>Considera o salário do próximo dia de pagamento</p>
+        {explicacaoAberta && (
+            <div id='saldo-explicacao' className='saldo-explicacao'>
+                <p>
+                    O saldo é o <strong>salário que você vai receber no próximo pagamento</strong> reduzindo o que será pago com ele:
+                    fatura do cartão de crédito, boletos, parcelas e contas fixas.
+                </p>
+                <p>
+                    <strong>Compras no débito não devem ser registradas</strong>: esse dinheiro já saiu da sua conta e não sai do próximo salário.
+                </p>
+                <p>
+                    O que sobrar no fim do mês fica na conta para gastos no débito e <strong>não passa para o mês seguinte</strong>.
+                </p>
+                <p>
+                    <strong>Exceção:</strong> dinheiro que você emprestou a outra pessoa pode ser registrado como despesa.
+                </p>
+            </div>
         )}
 
         <div className='saldo-mes'>
@@ -96,7 +122,7 @@ function Saldo({ ocultar }) {
                     {quitando ? 'Quitando...' : confirmarQuitacao ? 'Toque novamente para confirmar' : 'Contas do mês passado quitadas'}
                 </button>
                 <p>
-                    Fecha {nomeMeses}: leva {formatarMoeda(sobra, ocultar)} de sobra para este mês e registra a parcela paga nos parcelamentos que você paga.
+                    Fecha {nomeMeses} e registra a parcela paga nos parcelamentos que você paga. O que sobrou não passa para este mês: fica na conta para débito.
                 </p>
             </div>
         )}

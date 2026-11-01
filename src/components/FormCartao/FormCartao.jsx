@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux'
 import { MdCheck } from 'react-icons/md'
 import { adicionarCartao, editarCartao } from '../../store/cartoes'
 import { CORES_CARTAO } from '../../utils/cartoes'
-import { lerValor } from '../../utils/formatar'
+import { juntarLista, lerValor } from '../../utils/formatar'
 import './FormCartao.css'
 
 function FormCartao({ cartao, nomeInicial = '', onConcluir }) {
@@ -118,7 +118,7 @@ function FormCartao({ cartao, nomeInicial = '', onConcluir }) {
           {salvando ? 'Salvando...' : cartao ? 'Salvar cartão' : 'Adicionar cartão'}
         </button>
         {pendentes.length > 0 && (
-          <small className='form-cartao-pendentes'>Preencha: {pendentes.join(', ')}.</small>
+          <small className='form-cartao-pendentes'>Preencha: {juntarLista(pendentes)}.</small>
         )}
       </div>
     </form>

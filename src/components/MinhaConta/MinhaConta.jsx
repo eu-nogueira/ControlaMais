@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import supabase, { traduzirErroSenha } from '../../services/supabase'
+import { TEMAS, aplicarTema, lerTemaLocal } from '../../services/tema'
 import './MinhaConta.css'
 
-function MinhaConta({ usuario }) {
+function MinhaConta({ usuario, onAbrirTutorial }) {
   const nomeAtual = usuario.user_metadata?.nome ?? ''
   const [nome, setNome] = useState(nomeAtual)
   const [salvandoNome, setSalvandoNome] = useState(false)
   const [retornoNome, setRetornoNome] = useState(null)
+
+  const [tema, setTema] = useState(() => usuario.user_metadata?.tema ?? lerTemaLocal())
+  const [retornoTema, setRetornoTema] = useState(null)
 
   const [senhaAtual, setSenhaAtual] = useState('')
   const [senha, setSenha] = useState('')
@@ -24,6 +28,20 @@ function MinhaConta({ usuario }) {
     setRetornoNome(error
       ? { erro: true, mensagem: error.message }
       : { erro: false, mensagem: 'Nome atualizado.' })
+  }
+
+  // Aplica na hora e salva no perfil; se não salvar, volta ao tema anterior.
+  async function handleAlterarTema(novoTema) {
+    if (novoTema === tema) return
+    const anterior = tema
+    setTema(aplicarTema(novoTema))
+    setRetornoTema(null)
+
+    const { error } = await supabase.auth.updateUser({ data: { tema: novoTema } })
+    if (error) {
+      setTema(aplicarTema(anterior))
+      setRetornoTema({ erro: true, mensagem: `Não foi possível salvar o tema: ${error.message}` })
+    }
   }
 
   async function handleSalvarSenha(event) {
@@ -76,6 +94,32 @@ function MinhaConta({ usuario }) {
           {salvandoNome ? 'Salvando...' : 'Salvar nome'}
         </button>
       </form>
+
+      <section className='minha-conta-secao'>
+        <h3>Aparência</h3>
+        <div className='minha-conta-segmento' role='radiogroup' aria-label='Tema'>
+          {TEMAS.map((item) => (
+            <button
+              key={item.valor}
+              type='button'
+              role='radio'
+              aria-checked={tema === item.valor}
+              className={tema === item.valor ? 'minha-conta-segmento-ativo' : ''}
+              onClick={() => handleAlterarTema(item.valor)}
+            >
+              {item.rotulo}
+            </button>
+          ))}
+        </div>
+
+        {retornoTema && <p className='minha-conta-erro' role='alert'>{retornoTema.mensagem}</p>}
+      </section>
+
+      <section className='minha-conta-secao'>
+        <h3>Ajuda</h3>
+        <button type='button' className='botao botao-secundario' onClick={() => onAbrirTutorial('geral')}>Ver tutorial do app</button>
+        <button type='button' className='botao botao-secundario' onClick={() => onAbrirTutorial('simulacao')}>Ver tutorial da Simulação</button>
+      </section>
 
       <form className='minha-conta-secao' onSubmit={handleSalvarSenha}>
         <h3>Senha</h3>

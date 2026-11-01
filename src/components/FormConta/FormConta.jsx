@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { MdAdd, MdPerson, MdPeopleAlt, MdRemove } from 'react-icons/md'
 import { adicionarConta, editarConta } from '../../store/extrato'
-import { formatarMoeda } from '../../utils/formatar'
+import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { calcularUsoCartoes, encontrarCartao, mesmoCartao } from '../../utils/cartoes'
 import { TIPOS_DESPESA } from '../../utils/dashboard'
 import './FormConta.css'
@@ -339,7 +339,7 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
           {salvando ? 'Salvando...' : conta ? 'Salvar alterações' : despesa ? 'Adicionar despesa' : 'Adicionar receita'}
         </button>
         {pendentes.length > 0 && (
-          <small className='form-pendentes'>Preencha: {pendentes.join(', ')}.</small>
+          <small className='form-pendentes'>Preencha: {juntarLista(pendentes)}.</small>
         )}
       </div>
     </form>

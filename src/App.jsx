@@ -9,6 +9,7 @@ import { carregarCartoes, limparCartoes } from './store/cartoes'
 import { limparSimulacoes } from './store/simulacoes'
 import NovaSenha from './pages/NovaSenha'
 import supabase, { chegouPorRecuperacao, erroLinkAutenticacao } from './services/supabase'
+import { aplicarTema } from './services/tema'
 
 function App() {
   const [sessao, setSessao] = useState(undefined)
@@ -28,6 +29,12 @@ function App() {
   const nomeUsuario = sessao?.user.user_metadata?.nome || sessao?.user.email?.split('@')[0]
   const ehLarissa = /larissa/i.test(`${sessao?.user.user_metadata?.nome ?? ''} ${sessao?.user.email ?? ''}`)
   const saudacao = ehLarissa ? 'Olá, minha vida!' : `Olá, ${nomeUsuario}`
+  const temaUsuario = sessao?.user.user_metadata?.tema
+
+  // O tema salvo no perfil prevalece sobre a cópia local (pode ter mudado em outro aparelho).
+  useEffect(() => {
+    if (temaUsuario) aplicarTema(temaUsuario)
+  }, [temaUsuario])
 
   useEffect(() => {
     if (usuarioId) {

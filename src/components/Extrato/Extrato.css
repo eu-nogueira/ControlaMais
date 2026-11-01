@@ -35,6 +35,55 @@
     opacity: .35;
 }
 
+.extrato-busca-data {
+    display: flex;
+    align-items: flex-end;
+    gap: .5rem;
+    margin-bottom: .75rem;
+}
+
+.extrato-busca-data label {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: .375rem;
+    min-width: 0;
+}
+
+.extrato-busca-data span {
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+    font-weight: 500;
+}
+
+.extrato-busca-data input {
+    width: 100%;
+    min-height: 44px;
+    padding: .5rem .875rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    background: var(--cor-superficie);
+    font-size: 1rem;
+}
+
+.extrato-busca-data input:focus {
+    border-color: var(--cor-primaria);
+    outline: 3px solid var(--cor-primaria-suave);
+    outline-offset: 0;
+}
+
+.extrato-busca-data button {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    background: var(--cor-superficie);
+    color: var(--cor-texto-suave);
+}
+
 .extrato-filtros {
     display: flex;
     gap: .5rem;

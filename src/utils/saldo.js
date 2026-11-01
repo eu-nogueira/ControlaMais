@@ -15,17 +15,18 @@ function ehParcelamentoAtivo(conta) {
 
 // Período aberto: movimentações posteriores ao último mês fechado, mais a parcela
 // do mês de cada parcelamento que ainda está em andamento.
+// O saldo de um mês fechado não passa para o seguinte: o que sobra fica na conta para gastos
+// no débito, que não são registrados. `fechamento.saldo` é só o histórico do que sobrou.
 export function calcularPeriodo(contas, fechamento, ateMes = null) {
   const novas = contas.filter((conta) => (!fechamento || mesDa(conta) > fechamento.mes) && (!ateMes || mesDa(conta) <= ateMes))
   const carregadas = fechamento
     ? contas.filter((conta) => mesDa(conta) <= fechamento.mes && ehParcelamentoAtivo(conta))
     : []
 
-  const saldoInicial = fechamento ? fechamento.saldo : 0
   const receitas = somar(novas.filter((conta) => conta.tipoConta === 'Receita'))
   const despesas = somar(novas.filter((conta) => conta.tipoConta === 'Despesa' && conta.selected)) + somar(carregadas)
 
-  return { saldoInicial, receitas, despesas, saldo: saldoInicial + receitas - despesas }
+  return { receitas, despesas, saldo: receitas - despesas }
 }
 
 export function mesesParaFechar(contas, fechamento, mesAtual) {
@@ -45,8 +46,8 @@ export function mesesParaFechar(contas, fechamento, mesAtual) {
   return meses
 }
 
-// Fecha os meses em ordem: cada um gera a sobra para o seguinte e registra
-// +1 parcela paga nos parcelamentos em andamento, levando o vencimento para o mês seguinte.
+// Fecha os meses em ordem: registra o que sobrou em cada um (só histórico) e +1 parcela paga
+// nos parcelamentos em andamento, levando o vencimento para o mês seguinte.
 export function simularFechamento(contas, fechamento, meses) {
   let atual = fechamento
   let lista = contas

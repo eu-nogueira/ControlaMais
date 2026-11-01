@@ -16,6 +16,8 @@ import FormConta from '../components/FormConta/FormConta'
 import DetalheConta from '../components/DetalheConta/DetalheConta'
 import MinhaConta from '../components/MinhaConta/MinhaConta'
 import Notificacoes from '../components/Notificacoes/Notificacoes'
+import Tutorial from '../components/Tutorial/Tutorial'
+import { PASSOS_GERAL, PASSOS_SIMULACAO } from '../components/Tutorial/passos'
 import { limparErro } from '../store/extrato'
 import { limparErroCartoes } from '../store/cartoes'
 import supabase from '../services/supabase'
@@ -33,6 +35,11 @@ const TITULOS = {
   valores: 'Valores por pessoa',
 }
 
+const TUTORIAIS = {
+  geral: { titulo: 'Como usar o Controla+', passos: PASSOS_GERAL },
+  simulacao: { titulo: 'Como usar a Simulação', passos: PASSOS_SIMULACAO },
+}
+
 function Home({ saudacao, usuario }) {
   const [aba, setAba] = useState('inicio')
   const [ocultarValores, setOcultarValores] = useState(false)
@@ -42,6 +49,8 @@ function Home({ saudacao, usuario }) {
   const [minhaContaAberta, setMinhaContaAberta] = useState(false)
   const [notificacoesLidas, setNotificacoesLidas] = useState(() => lerNotificacoesLidas(usuario.id))
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(null)
+  const [tutorialEscolhido, setTutorialEscolhido] = useState(null)
+  const [tutoriaisVistos, setTutoriaisVistos] = useState(() => usuario.user_metadata?.tutoriais ?? {})
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const carregando = useSelector((state) => state.extrato.carregando)
   const erro = useSelector((state) => state.extrato.erro)
@@ -58,6 +67,28 @@ function Home({ saudacao, usuario }) {
   }
   const fecharMinhaConta = useCallback(() => setMinhaContaAberta(false), [])
   const fecharNotificacoes = useCallback(() => setNotificacoesAbertas(null), [])
+
+  // Cada tutorial abre sozinho uma vez: o geral no primeiro acesso e o da simulação na primeira
+  // visita ao módulo. Depois só abre quando pedido (Minha conta ou "Como funciona" na Simulação).
+  const tutorialAutomatico = carregando
+    ? null
+    : !tutoriaisVistos.geral ? 'geral' : aba === 'simulacao' && !tutoriaisVistos.simulacao ? 'simulacao' : null
+  const tutorialAberto = tutorialEscolhido ?? tutorialAutomatico
+
+  // Fechar, pular ou concluir marca como visto. O registro fica no perfil do usuário (Supabase);
+  // se não for salvo, o tutorial volta a aparecer no próximo acesso.
+  const fecharTutorial = useCallback(() => {
+    setTutorialEscolhido(null)
+    if (tutoriaisVistos[tutorialAberto]) return
+    const vistos = { ...tutoriaisVistos, [tutorialAberto]: true }
+    setTutoriaisVistos(vistos)
+    supabase.auth.updateUser({ data: { tutoriais: vistos } })
+  }, [tutoriaisVistos, tutorialAberto])
+
+  function abrirTutorial(chave) {
+    setMinhaContaAberta(false)
+    setTutorialEscolhido(chave)
+  }
 
   const hoje = useHoje()
   const notificacoes = gerarNotificacoes(contas, hoje)
@@ -137,24 +168,24 @@ function Home({ saudacao, usuario }) {
                     Ver tudo <MdChevronRight size={18} />
                   </button>
                 </div>
-                <Extrato ocultar={ocultarValores} limite={5} onSelecionar={setContaSelecionada} />
+                <Extrato limite={5} onSelecionar={setContaSelecionada} />
               </section>
             </>
           )}
 
           {!carregando && aba === 'extrato' && (
-            <Extrato ocultar={ocultarValores} comFiltro onSelecionar={setContaSelecionada} />
+            <Extrato comFiltro onSelecionar={setContaSelecionada} />
           )}
 
-          {!carregando && aba === 'parcelas' && <Parcelamentos ocultar={ocultarValores} />}
+          {!carregando && aba === 'parcelas' && <Parcelamentos />}
 
-          {!carregando && aba === 'cartoes' && <Cartoes ocultar={ocultarValores} />}
+          {!carregando && aba === 'cartoes' && <Cartoes />}
 
-          {!carregando && aba === 'dashboard' && <Dashboard ocultar={ocultarValores} />}
+          {!carregando && aba === 'dashboard' && <Dashboard />}
 
-          {!carregando && aba === 'simulacao' && <Simulacao ocultar={ocultarValores} />}
+          {!carregando && aba === 'simulacao' && <Simulacao onAbrirTutorial={() => abrirTutorial('simulacao')} />}
 
-          {!carregando && aba === 'valores' && <Total ocultar={ocultarValores} />}
+          {!carregando && aba === 'valores' && <Total />}
         </div>
       </main>
 
@@ -166,7 +197,7 @@ function Home({ saudacao, usuario }) {
 
       {contaSelecionada && (
         <Modal titulo='Detalhes da movimentação' onFechar={fecharDetalhe}>
-          <DetalheConta id={contaSelecionada} ocultar={ocultarValores} onEditar={editarConta} onFechar={fecharDetalhe} />
+          <DetalheConta id={contaSelecionada} onEditar={editarConta} onFechar={fecharDetalhe} />
         </Modal>
       )}
 
@@ -181,7 +212,6 @@ function Home({ saudacao, usuario }) {
           <Notificacoes
             notificacoes={notificacoes}
             novas={notificacoesAbertas}
-            ocultar={ocultarValores}
             onVerParcelas={() => {
               fecharNotificacoes()
               alterarAba('parcelas')
@@ -192,7 +222,13 @@ function Home({ saudacao, usuario }) {
 
       {minhaContaAberta && (
         <Modal titulo='Minha conta' onFechar={fecharMinhaConta}>
-          <MinhaConta usuario={usuario} />
+          <MinhaConta usuario={usuario} onAbrirTutorial={abrirTutorial} />
+        </Modal>
+      )}
+
+      {tutorialAberto && (
+        <Modal titulo={TUTORIAIS[tutorialAberto].titulo} onFechar={fecharTutorial}>
+          <Tutorial key={tutorialAberto} passos={TUTORIAIS[tutorialAberto].passos} onConcluir={fecharTutorial} />
         </Modal>
       )}
     </div>
