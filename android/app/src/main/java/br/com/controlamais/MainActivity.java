@@ -1,4 +1,4 @@
-package br.com.versotech.controlamais;
+package br.com.controlamais;
 
 import com.getcapacitor.BridgeActivity;
 
