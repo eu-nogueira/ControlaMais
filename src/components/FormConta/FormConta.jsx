@@ -49,7 +49,9 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   const parcelasPagas = conta?.parcelaPaga || 0
   // Na edição, o próprio gasto sai do cálculo para não ser contado duas vezes no limite.
   const outrasContas = conta ? contas.filter((item) => item.id !== conta.id) : contas
-  const cartaoEscolhido = encontrarCartao(calcularUsoCartoes(cartoesCadastrados, outrasContas, fechamento), cartao)
+  // Comprando no cartão de quem você vai pagar, seus cartões ficam de fora: o limite deles não muda.
+  const cartaoDeTerceiro = despesa && selected && Boolean(anotarPara.trim())
+  const cartaoEscolhido = cartaoDeTerceiro ? undefined : encontrarCartao(calcularUsoCartoes(cartoesCadastrados, outrasContas, fechamento), cartao)
 
   // Despesa do mês atual com o mês passado ainda não quitado: o vencimento decide de qual saldo ela sai.
   // Vencendo até o mês atual, sai do saldo exibido; depois disso, fica para o próximo salário.
@@ -121,6 +123,7 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   }
 
   function avisoCartao() {
+    if (cartaoDeTerceiro) return `Cartão de ${anotarPara.trim()}: não entra no limite dos seus cartões.`
     if (cartoesCadastrados.length === 0) return 'Cadastre seus cartões na aba Cartões para acompanhar o limite.'
     if (!cartao.trim()) return 'Escolha um cartão cadastrado ou digite o nome.'
     if (!cartaoEscolhido) return 'Cartão não cadastrado: o limite dele não será controlado.'
@@ -332,8 +335,8 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
             </label>
             {ehCartao && (
               <div className='form-campo'>
-                <span id='rotulo-cartao'>Qual cartão foi usado?</span>
-                {cartoesCadastrados.length > 0 && (
+                <span id='rotulo-cartao'>{cartaoDeTerceiro ? `Qual cartão de ${anotarPara.trim()} foi usado?` : 'Qual cartão foi usado?'}</span>
+                {cartoesCadastrados.length > 0 && !cartaoDeTerceiro && (
                   <div className='form-cartoes' role='group' aria-label='Cartões cadastrados'>
                     {cartoesCadastrados.map((item) => (
                       <button

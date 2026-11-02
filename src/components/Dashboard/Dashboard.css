@@ -8,7 +8,6 @@
     --serie-5: #d55181;
     --serie-6: #008300;
     --serie-demais: #6b6a65;
-    --serie-disponivel: #3a4552;
 
     display: flex;
     flex-direction: column;
@@ -23,7 +22,6 @@
     --serie-5: #e87ba4;
     --serie-6: #008300;
     --serie-demais: #898781;
-    --serie-disponivel: #d3d8df;
 }
 
 .dashboard-meses {

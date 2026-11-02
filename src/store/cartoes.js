@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import supabase from "../services/supabase";
-import { mesmoCartao } from "../utils/cartoes";
+import { cartaoDeTerceiro, mesmoCartao } from "../utils/cartoes";
 import { mensagemErro } from '../services/erros'
 
 function paraCartao(linha) {
@@ -63,7 +63,7 @@ export const editarCartao = createAsyncThunk('cartoes/editarCartao', async ({ id
     const contasRenomeadas = nomeAnterior === nome
         ? []
         : getState().extrato.contasExtrato
-            .filter((conta) => conta.tipoConta === 'Despesa' && mesmoCartao(conta.cartao, nomeAnterior))
+            .filter((conta) => conta.tipoConta === 'Despesa' && !cartaoDeTerceiro(conta) && mesmoCartao(conta.cartao, nomeAnterior))
             .map((conta) => conta.id)
 
     if (contasRenomeadas.length > 0) {

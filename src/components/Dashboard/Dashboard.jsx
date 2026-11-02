@@ -66,7 +66,7 @@ function Dashboard({ ocultar }) {
 
         <GraficoPizza
           titulo='Quem está usando cada cartão'
-          descricao='Uso atual do limite, por quem fez o gasto. Não muda com o mês escolhido acima.'
+          descricao='Valor da parcela que cada pessoa paga nas compras em aberto. Não muda com o mês escolhido acima.'
           filtro={usoCartoes.length > 1 && (
             <div className='dashboard-cartoes' role='group' aria-label='Escolher cartão'>
               {usoCartoes.map((item) => (
@@ -85,7 +85,7 @@ function Dashboard({ ocultar }) {
           fatias={cartao?.fatias ?? []}
           vazio={usoCartoes.length === 0 ? 'Nenhum cartão cadastrado ou compra no cartão em aberto.' : `Nenhum gasto em aberto no ${cartao.nome}.`}
           rodape={rodapeCartao()}
-          rotuloTotal={cartao?.limite ? 'Limite' : 'Total'}
+          rotuloTotal='Por mês'
           ocultar={ocultar}
         />
 

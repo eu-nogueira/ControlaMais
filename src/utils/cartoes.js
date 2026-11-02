@@ -15,6 +15,9 @@ export const normalizarNomeCartao = (nome) => (nome || '').trim().normalize('NFD
 
 export const mesmoCartao = (nomeA, nomeB) => normalizarNomeCartao(nomeA) !== '' && normalizarNomeCartao(nomeA) === normalizarNomeCartao(nomeB)
 
+// Gasto que você vai pagar a outra pessoa, feito no cartão dela: não ocupa o limite dos seus cartões.
+export const cartaoDeTerceiro = (conta) => Boolean(conta.cartao && conta.selected && conta.anotarPara?.trim())
+
 export function encontrarCartao(cartoes, nome) {
   return cartoes.find((cartao) => mesmoCartao(cartao.nome, nome))
 }
@@ -34,7 +37,7 @@ export function valorEmAberto(conta, fechamento) {
 
 export function comprasEmAberto(contas, fechamento) {
   return contas
-    .filter((conta) => conta.tipoConta === 'Despesa' && conta.cartao)
+    .filter((conta) => conta.tipoConta === 'Despesa' && conta.cartao && !cartaoDeTerceiro(conta))
     .map((conta) => ({ conta, emAberto: valorEmAberto(conta, fechamento) }))
     .filter((compra) => compra.emAberto > 0)
 }

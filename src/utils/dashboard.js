@@ -87,8 +87,8 @@ const VOCE = 'Você'
 // "Você" sempre primeiro, para manter a mesma cor em todos os cartões.
 const porResponsavel = (a, b) => (b.rotulo === VOCE) - (a.rotulo === VOCE) || porNome(a, b)
 
-// Uso atual do limite de cada cartão por quem fez o gasto: você ou a pessoa que vai te reembolsar.
-// Cartões cadastrados mostram também o limite disponível; os não cadastrados, só o que foi gasto.
+// Quanto cada pessoa paga por mês em cada cartão: a parcela dos parcelados, a cobrança das contas
+// fixas e o valor das compras à vista ainda em aberto. O limite usado considera o total em aberto.
 export function usoCartoesPorResponsavel(cartoes, contas, fechamento) {
   const semCadastro = cartoesSemCadastro(cartoes, contas, fechamento).map((nome) => ({
     nome,
@@ -97,14 +97,12 @@ export function usoCartoesPorResponsavel(cartoes, contas, fechamento) {
   }))
 
   return [...calcularUsoCartoes(cartoes, contas, fechamento), ...semCadastro].map((cartao) => {
-    const gastos = cartao.compras.map(({ conta, emAberto }) => ({
+    const gastos = cartao.compras.map(({ conta }) => ({
       rotulo: conta.selected ? VOCE : conta.responsavel?.trim() || 'Outra pessoa',
-      valor: emAberto
+      valor: conta.valorFormatado
     }))
-    const usado = gastos.reduce((total, gasto) => total + gasto.valor, 0)
-    const disponivel = cartao.limite ? cartao.limite - usado : 0
+    const usado = cartao.compras.reduce((total, compra) => total + compra.emAberto, 0)
     const fatias = montarFatias(agrupar(gastos), porResponsavel)
-    if (disponivel > 0) fatias.push({ chave: 'disponivel', rotulo: 'Disponível', valor: disponivel, cor: 'var(--serie-disponivel)' })
 
     return { chave: normalizarNomeCartao(cartao.nome), nome: cartao.nome, limite: cartao.limite, usado, fatias }
   })
