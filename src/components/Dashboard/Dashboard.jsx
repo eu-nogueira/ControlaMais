@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { MdChevronLeft, MdChevronRight } from 'react-icons/md'
+import ComparacaoMeses from '../ComparacaoMeses/ComparacaoMeses'
 import GraficoPizza from '../GraficoPizza/GraficoPizza'
 import Projecao from '../Projecao/Projecao'
-import { dadosDashboard, ultimoMesComDespesa } from '../../utils/dashboard'
+import { dadosDashboard, ultimoMesComDespesa, usoCartoesPorResponsavel } from '../../utils/dashboard'
 import { formatarMoeda } from '../../utils/formatar'
 import { PRIMEIRO_MES, deslocarMes, formatarMes } from '../../utils/mes'
 import useMesAtual from '../../hooks/useMesAtual'
@@ -12,7 +13,9 @@ import './Dashboard.css'
 function Dashboard({ ocultar }) {
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const cartoes = useSelector((state) => state.cartoes.lista)
+  const fechamento = useSelector((state) => state.extrato.fechamento)
   const [mesEscolhido, setMesEscolhido] = useState(null)
+  const [cartaoEscolhido, setCartaoEscolhido] = useState(null)
   const mesAtual = useMesAtual()
 
   // Permite avançar até o último mês com parcela prevista.
@@ -26,7 +29,16 @@ function Dashboard({ ocultar }) {
     setMesEscolhido(novoMes === mesAtual ? null : novoMes)
   }
 
-  const dados = dadosDashboard(contas, cartoes, mes)
+  const dados = dadosDashboard(contas, mes)
+  const usoCartoes = usoCartoesPorResponsavel(cartoes, contas, fechamento)
+  const cartao = usoCartoes.find((item) => item.chave === cartaoEscolhido) ?? usoCartoes[0]
+
+  function rodapeCartao() {
+    if (!cartao) return null
+    if (!cartao.limite) return `${cartao.nome} não está cadastrado: o limite não é controlado. Gasto em aberto: ${formatarMoeda(cartao.usado, ocultar)}.`
+    const usoTexto = `${formatarMoeda(cartao.usado, ocultar)} usados de ${formatarMoeda(cartao.limite, ocultar)} de limite.`
+    return cartao.usado > cartao.limite ? `${usoTexto} O limite foi ultrapassado.` : usoTexto
+  }
 
   return (
     <div className='dashboard'>
@@ -40,11 +52,7 @@ function Dashboard({ ocultar }) {
         </button>
       </div>
 
-      <div className='dashboard-total'>
-        <span>Seus gastos no mês</span>
-        <strong>{formatarMoeda(dados.totalMeu, ocultar)}</strong>
-        <small>Despesas que você paga, com parcelados contando a parcela do mês.</small>
-      </div>
+      <ComparacaoMeses contas={contas} mes={mes} ocultar={ocultar} />
 
       <div className='dashboard-graficos'>
         <GraficoPizza
@@ -57,10 +65,27 @@ function Dashboard({ ocultar }) {
         />
 
         <GraficoPizza
-          titulo='Gastos por cartão'
-          descricao='Compras no cartão que você paga.'
-          fatias={dados.cartoes}
-          vazio='Nenhuma compra no cartão neste mês.'
+          titulo='Quem está usando cada cartão'
+          descricao='Uso atual do limite, por quem fez o gasto. Não muda com o mês escolhido acima.'
+          filtro={usoCartoes.length > 1 && (
+            <div className='dashboard-cartoes' role='group' aria-label='Escolher cartão'>
+              {usoCartoes.map((item) => (
+                <button
+                  key={item.chave}
+                  type='button'
+                  aria-pressed={item.chave === cartao.chave}
+                  className={`dashboard-cartoes-opcao ${item.chave === cartao.chave ? 'dashboard-cartoes-opcao-ativa' : ''}`}
+                  onClick={() => setCartaoEscolhido(item.chave)}
+                >
+                  {item.nome}
+                </button>
+              ))}
+            </div>
+          )}
+          fatias={cartao?.fatias ?? []}
+          vazio={usoCartoes.length === 0 ? 'Nenhum cartão cadastrado ou compra no cartão em aberto.' : `Nenhum gasto em aberto no ${cartao.nome}.`}
+          rodape={rodapeCartao()}
+          rotuloTotal={cartao?.limite ? 'Limite' : 'Total'}
           ocultar={ocultar}
         />
 

@@ -1,0 +1,40 @@
+.sobra-mes-texto {
+    font-size: .9375rem;
+    line-height: 1.45;
+}
+
+.sobra-mes-metas {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.sobra-mes-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .125rem;
+    padding: .75rem 1rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: 12px;
+    background: var(--cor-superficie);
+    color: var(--cor-texto);
+    text-align: left;
+}
+
+.sobra-mes-meta strong {
+    font-size: .9375rem;
+    overflow-wrap: anywhere;
+}
+
+.sobra-mes-meta span {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.sobra-mes-meta-ativa {
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 1px var(--cor-primaria);
+    background: var(--cor-primaria-suave);
+}

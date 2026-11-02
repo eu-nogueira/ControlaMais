@@ -10,7 +10,7 @@ const ESPACO = 2
 
 const formatarPercentual = (valor) => `${valor.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`
 
-function GraficoPizza({ titulo, descricao, fatias, vazio, rodape, ocultar }) {
+function GraficoPizza({ titulo, descricao, filtro, fatias, vazio, rodape, rotuloTotal = 'Total', ocultar }) {
   const [ativa, setAtiva] = useState(null)
   const total = fatias.reduce((soma, fatia) => soma + fatia.valor, 0)
   const fatiaAtiva = fatias.find((fatia) => fatia.chave === ativa)
@@ -37,6 +37,8 @@ function GraficoPizza({ titulo, descricao, fatias, vazio, rodape, ocultar }) {
         <h2>{titulo}</h2>
         {descricao && <p>{descricao}</p>}
       </header>
+
+      {filtro}
 
       {fatias.length === 0 ? (
         <p className='grafico-pizza-vazio'>{vazio}</p>
@@ -65,7 +67,7 @@ function GraficoPizza({ titulo, descricao, fatias, vazio, rodape, ocultar }) {
               </g>
             </svg>
             <div className='grafico-pizza-centro' aria-live='polite'>
-              <span>{fatiaAtiva ? fatiaAtiva.rotulo : 'Total'}</span>
+              <span>{fatiaAtiva ? fatiaAtiva.rotulo : rotuloTotal}</span>
               <strong>{formatarMoeda(fatiaAtiva ? fatiaAtiva.valor : total, ocultar)}</strong>
               {fatiaAtiva && <small>{formatarPercentual(percentual(fatiaAtiva.valor))}</small>}
             </div>

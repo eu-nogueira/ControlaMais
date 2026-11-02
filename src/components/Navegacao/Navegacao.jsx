@@ -1,4 +1,4 @@
-import { MdAdd, MdCalculate, MdCreditCard, MdHome, MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong } from 'react-icons/md'
+import { MdAdd, MdCalculate, MdCreditCard, MdHome, MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSavings } from 'react-icons/md'
 import './Navegacao.css'
 
 const ABAS = [
@@ -6,8 +6,9 @@ const ABAS = [
   { valor: 'extrato', rotulo: 'Extrato', icone: <MdReceiptLong size={24} /> },
   { valor: 'parcelas', rotulo: 'Parcelas', icone: <MdCreditCard size={24} /> },
   { valor: 'cartoes', rotulo: 'Cartões', icone: <MdPayment size={24} /> },
-  { valor: 'dashboard', rotulo: 'Dashboard', icone: <MdPieChart size={24} /> },
-  // No celular, Valores e Simulação ficam fora da barra (acessíveis pelas ações rápidas da tela Início).
+  { valor: 'dashboard', rotulo: 'Dashboards', icone: <MdPieChart size={24} /> },
+  // No celular, Metas, Valores e Simulação ficam fora da barra (acessíveis pelas ações rápidas da tela Início).
+  { valor: 'metas', rotulo: 'Metas', icone: <MdSavings size={24} />, soDesktop: true },
   { valor: 'valores', rotulo: 'Valores', icone: <MdPeopleAlt size={24} />, soDesktop: true },
   { valor: 'simulacao', rotulo: 'Simulação', icone: <MdCalculate size={24} />, soDesktop: true },
 ]

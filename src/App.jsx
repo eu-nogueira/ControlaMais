@@ -7,6 +7,7 @@ import store from './store/configureStore'
 import { carregarContas, limparExtrato } from './store/extrato'
 import { carregarCartoes, limparCartoes } from './store/cartoes'
 import { limparSimulacoes } from './store/simulacoes'
+import { carregarMetas, limparMetas } from './store/metas'
 import NovaSenha from './pages/NovaSenha'
 import supabase, { chegouPorRecuperacao, erroLinkAutenticacao } from './services/supabase'
 import { aplicarTema } from './services/tema'
@@ -27,7 +28,7 @@ function App() {
 
   const usuarioId = sessao?.user.id
   const nomeUsuario = sessao?.user.user_metadata?.nome || sessao?.user.email?.split('@')[0]
-  const ehLarissa = /larissa/i.test(`${sessao?.user.user_metadata?.nome ?? ''} ${sessao?.user.email ?? ''}`)
+  const ehLarissa = sessao?.user.email?.trim().toLowerCase() === 'larissadasilva14072003@gmail.com'
   const saudacao = ehLarissa ? 'Olá, minha vida!' : `Olá, ${nomeUsuario}`
   const temaUsuario = sessao?.user.user_metadata?.tema
 
@@ -40,10 +41,12 @@ function App() {
     if (usuarioId) {
       store.dispatch(carregarContas())
       store.dispatch(carregarCartoes())
+      store.dispatch(carregarMetas())
     } else {
       store.dispatch(limparExtrato())
       store.dispatch(limparCartoes())
       store.dispatch(limparSimulacoes())
+      store.dispatch(limparMetas())
     }
   }, [usuarioId])
 

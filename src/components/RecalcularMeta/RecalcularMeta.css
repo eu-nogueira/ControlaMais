@@ -1,0 +1,12 @@
+.recalcular-meta-texto {
+    display: flex;
+    flex-direction: column;
+    gap: .625rem;
+    font-size: .9375rem;
+    line-height: 1.45;
+}
+
+.recalcular-meta-dispensar {
+    background: transparent;
+    color: var(--cor-texto-suave);
+}

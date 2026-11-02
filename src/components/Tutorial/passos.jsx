@@ -1,7 +1,7 @@
 import {
   MdAccountBalanceWallet, MdAdd, MdAttachMoney, MdBalance, MdCalculate, MdCompareArrows, MdCreditCard, MdHome, MdInfoOutline, MdInsights, MdNotificationsNone,
-  MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSave, MdShield, MdShoppingCart, MdSwapHoriz,
-  MdTipsAndUpdates, MdTune, MdVisibility
+  MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSave, MdSavings, MdShield, MdShoppingCart, MdSwapHoriz,
+  MdTaskAlt, MdTipsAndUpdates, MdTune, MdVisibility
 } from 'react-icons/md'
 
 const ICONE = 26
@@ -23,7 +23,7 @@ export const PASSOS_GERAL = [
     icone: <MdAttachMoney size={ICONE} />,
     conteudo: (
       <>
-        <p>No topo fica o seu <strong>saldo</strong>. Logo abaixo, os atalhos para registrar receitas e despesas, ver o extrato, os valores por pessoa e fazer simulações.</p>
+        <p>No topo fica o seu <strong>saldo</strong>. Logo abaixo, os atalhos para registrar receitas e despesas, acompanhar suas metas, ver os valores por pessoa e fazer simulações.</p>
         <p>Use o ícone de <strong>olho</strong> <MdVisibility size={16} aria-hidden='true' /> no cabeçalho para esconder o saldo e a renda comprometida quando estiver em público.</p>
       </>
     ),
@@ -38,6 +38,23 @@ export const PASSOS_GERAL = [
         <p>O que sobrar no fim do mês fica na conta para gastos no débito e <strong>não passa para o mês seguinte</strong>.</p>
         <p><strong>Exceção:</strong> dinheiro que você emprestou a outra pessoa pode ser registrado como despesa.</p>
         <p>Toque no <MdInfoOutline size={16} aria-hidden='true' /> ao lado do saldo para rever esta explicação.</p>
+      </>
+    ),
+  },
+  {
+    titulo: 'Virada do mês',
+    icone: <MdTaskAlt size={ICONE} />,
+    conteudo: (
+      <>
+        <p>No começo do mês, o saldo continua sendo o do mês passado <strong>até você tocar em "Contas do mês passado quitadas"</strong>.</p>
+        <p>Antes disso, ao registrar uma despesa do mês atual, <strong>o vencimento é obrigatório</strong> e decide de onde ela sai:</p>
+        <ul>
+          <li><strong>Vence neste mês:</strong> é descontada do saldo atual.</li>
+          <li><strong>Vence depois:</strong> fica para o <strong>próximo salário</strong> e só é descontada depois de quitar o mês passado.</li>
+        </ul>
+        <p>Ao quitar, o novo saldo desconta as <strong>parcelas a pagar do mês</strong> (as mesmas da aba Parcelas) e as despesas que ficaram para o próximo salário.</p>
+        <p>Até o próximo salário ser registrado, ele é estimado pela <strong>média salarial</strong>: a média das receitas com <strong>"salário" na descrição</strong> dos 3 últimos meses ou, se ainda não houver 3, a do último mês.</p>
+        <p>Se sobrou dinheiro no mês quitado e você tem metas em andamento, o app pergunta uma vez se quer <strong>guardar parte da sobra</strong> em uma delas.</p>
       </>
     ),
   },
@@ -62,15 +79,31 @@ export const PASSOS_GERAL = [
     ),
   },
   {
-    titulo: 'Parcelas, cartões e dashboard',
+    titulo: 'Parcelas, cartões e dashboards',
     icone: <MdPieChart size={ICONE} />,
     conteudo: (
       <ul>
         <li><MdCreditCard size={16} aria-hidden='true' /> <strong>Parcelas:</strong> quanto falta pagar e registro das parcelas pagas.</li>
         <li><MdPayment size={16} aria-hidden='true' /> <strong>Cartões:</strong> seus cartões e o que está em cada um.</li>
-        <li><MdPieChart size={16} aria-hidden='true' /> <strong>Dashboard:</strong> para onde seus gastos estão indo.</li>
+        <li><MdPieChart size={16} aria-hidden='true' /> <strong>Dashboards:</strong> seus gastos comparados com o mês anterior, para onde eles estão indo, quem está usando cada cartão e a projeção da sobra nos próximos meses.</li>
         <li><MdPeopleAlt size={16} aria-hidden='true' /> <strong>Valores:</strong> quanto você tem a receber e a pagar referente a outras pessoas.</li>
       </ul>
+    ),
+  },
+  {
+    titulo: 'Metas e reservas',
+    icone: <MdSavings size={ICONE} />,
+    conteudo: (
+      <>
+        <p>Guarde a sobra de cada mês em três tipos:</p>
+        <ul>
+          <li><strong>Meta:</strong> objetivo com valor e prazo, como uma viagem. O app calcula quanto guardar por mês para chegar lá.</li>
+          <li><strong>Reserva:</strong> dinheiro guardado sem prazo, como a reserva de emergência. O valor ideal sugerido é de 6 meses das suas despesas.</li>
+          <li><strong>Meta dinâmica:</strong> o depósito aumenta um pouco a cada mês. Abra o <strong>planejamento</strong> para marcar cada mês como guardado, pausar ou encerrar.</li>
+        </ul>
+        <p>Use <strong>Guardar</strong> e <strong>Resgatar</strong> para registrar o que entra e sai. <strong>Guardar não altera o saldo disponível</strong>: o dinheiro vem da sobra que ficou na conta.</p>
+        <p>Se uma meta não for alcançada no prazo no ritmo atual, o app pergunta se você quer recalculá-la.</p>
+      </>
     ),
   },
   {

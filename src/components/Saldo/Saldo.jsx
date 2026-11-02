@@ -4,7 +4,7 @@ import { MdArrowDownward, MdArrowUpward, MdInfoOutline, MdTaskAlt } from 'react-
 import { quitarMesesAnteriores } from '../../store/extrato'
 import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { formatarMes } from '../../utils/mes'
-import { calcularPeriodo, mesesParaFechar } from '../../utils/saldo'
+import { calcularSaldoExibido, mesesParaFechar } from '../../utils/saldo'
 import useMesAtual from '../../hooks/useMesAtual'
 import './Saldo.css'
 
@@ -17,12 +17,13 @@ function Saldo({ ocultar }) {
     const mesAtual = useMesAtual()
     const dispatch = useDispatch()
 
-    const { receitas: receitaMes, despesas: despesaMes, saldo } = calcularPeriodo(contas, fechamento)
+    const { receitas: receitaMes, despesas: despesaMes, saldo, mediaSalarial } = calcularSaldoExibido(contas, fechamento, mesAtual)
     const porcentagemComprometimento = receitaMes > 0 ? (despesaMes / receitaMes) * 100 : 0
     const larguraBarra = Math.min(porcentagemComprometimento, 100)
 
     const mesesAbertos = mesesParaFechar(contas, fechamento, mesAtual)
     const nomeMeses = juntarLista(mesesAbertos.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()))
+    const nomeMesesMedia = mediaSalarial && juntarLista(mediaSalarial.meses.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()))
 
     async function handleQuitar() {
         if (!confirmarQuitacao) {
@@ -54,7 +55,11 @@ function Saldo({ ocultar }) {
         <p className={`saldo-valor ${saldo < 0 ? 'saldo-valor-negativo' : ''}`}>
             {formatarMoeda(saldo, ocultar)}
         </p>
-        <p className='saldo-base'>Considera o salário do próximo dia de pagamento</p>
+        <p className='saldo-base'>
+            {mediaSalarial
+                ? `Considera a média salarial (${mediaSalarial.meses.length === 1 ? `salário de ${nomeMesesMedia}` : `média de ${nomeMesesMedia}`}) até o próximo salário ser registrado`
+                : 'Considera o salário do próximo dia de pagamento'}
+        </p>
         {explicacaoAberta && (
             <div id='saldo-explicacao' className='saldo-explicacao'>
                 <p>
@@ -68,6 +73,14 @@ function Saldo({ ocultar }) {
                     O que sobrar no fim do mês fica na conta para gastos no débito e <strong>não passa para o mês seguinte</strong>.
                 </p>
                 <p>
+                    Enquanto as <strong>contas do mês passado não forem quitadas</strong>, uma despesa do mês atual só é descontada
+                    do saldo exibido se vencer neste mês. Vencendo depois, fica para o próximo salário.
+                </p>
+                <p>
+                    Depois de quitar o mês passado, enquanto o próximo salário não for registrado, ele é estimado pela
+                    <strong> média salarial</strong>: a média das receitas com "salário" na descrição dos 3 últimos meses ou, se ainda não houver 3, a do último mês.
+                </p>
+                <p>
                     <strong>Exceção:</strong> dinheiro que você emprestou a outra pessoa pode ser registrado como despesa.
                 </p>
             </div>
@@ -77,7 +90,7 @@ function Saldo({ ocultar }) {
             <div className='saldo-mes-item'>
                 <span className='saldo-mes-icone saldo-mes-icone-receita'><MdArrowDownward /></span>
                 <div>
-                    <p className='saldo-mes-rotulo'>Receitas do mês</p>
+                    <p className='saldo-mes-rotulo'>{mediaSalarial ? 'Média salarial' : 'Receitas do mês'}</p>
                     <p className='saldo-mes-valor'>{formatarMoeda(receitaMes, ocultar)}</p>
                 </div>
             </div>

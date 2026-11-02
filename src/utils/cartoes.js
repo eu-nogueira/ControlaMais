@@ -1,4 +1,5 @@
 import { ehContaFixa } from './parcelas'
+import { mesDoSaldo } from './saldo'
 
 export const CORES_CARTAO = [
   { valor: '#0b7a4b', rotulo: 'Verde' },
@@ -9,7 +10,8 @@ export const CORES_CARTAO = [
   { valor: '#1f2937', rotulo: 'Preto' },
 ]
 
-export const normalizarNomeCartao = (nome) => (nome || '').trim().toLocaleLowerCase('pt-BR')
+// Compara nomes sem diferenciar acentos, maiúsculas e espaços nas pontas ("emprestimo" = "Empréstimo").
+export const normalizarNomeCartao = (nome) => (nome || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
 
 export const mesmoCartao = (nomeA, nomeB) => normalizarNomeCartao(nomeA) !== '' && normalizarNomeCartao(nomeA) === normalizarNomeCartao(nomeB)
 
@@ -26,11 +28,11 @@ export function valorEmAberto(conta, fechamento) {
   const parcelas = Number(conta.parcela) || 1
   if (parcelas > 1) return conta.valorFormatado * Math.max(parcelas - (conta.parcelaPaga || 0), 0)
 
-  const mesAberto = !fechamento || conta.dataCadastro.slice(0, 7) > fechamento.mes
+  const mesAberto = !fechamento || mesDoSaldo(conta) > fechamento.mes
   return mesAberto ? conta.valorFormatado : 0
 }
 
-function comprasEmAberto(contas, fechamento) {
+export function comprasEmAberto(contas, fechamento) {
   return contas
     .filter((conta) => conta.tipoConta === 'Despesa' && conta.cartao)
     .map((conta) => ({ conta, emAberto: valorEmAberto(conta, fechamento) }))

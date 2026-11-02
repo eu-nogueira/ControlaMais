@@ -1,7 +1,10 @@
 import { PRIMEIRO_MES, deslocarData, deslocarMes } from './mes'
 import { ehParcelado, parcelasRestantes } from './parcelas'
 
-const mesDa = (conta) => conta.dataCadastro.slice(0, 7)
+// Mês cujo saldo a movimentação afeta: o da data de cadastro, salvo despesas do mês atual
+// registradas antes de quitar o mês passado, que guardam o mês escolhido (passado ou atual).
+export const mesDoSaldo = (conta) => conta.mesSaldo || conta.dataCadastro.slice(0, 7)
+const mesDa = mesDoSaldo
 
 const somar = (contas) => contas.reduce((total, conta) => total + conta.valorFormatado, 0)
 
@@ -46,6 +49,39 @@ export function mesesParaFechar(contas, fechamento, mesAtual) {
   return meses
 }
 
+// Até as contas do mês passado serem quitadas, despesas marcadas para o próximo salário
+// ficam fora do saldo exibido. As demais movimentações seguem o período aberto normalmente.
+export function calcularSaldoExibido(contas, fechamento, mesAtual) {
+  const abertos = mesesParaFechar(contas, fechamento, mesAtual)
+  const mesPassado = abertos[abertos.length - 1]
+  const doSaldo = mesPassado ? contas.filter((conta) => !conta.mesSaldo || conta.mesSaldo <= mesPassado) : contas
+  const periodo = calcularPeriodo(doSaldo, fechamento)
+  if (periodo.receitas > 0 || !fechamento) return { ...periodo, mediaSalarial: null }
+
+  // Sem receita registrada no período, o próximo salário é estimado pela média salarial.
+  const mediaSalarial = estimarMediaSalarial(contas, fechamento.mes)
+  if (!mediaSalarial) return { ...periodo, mediaSalarial: null }
+  return { ...periodo, receitas: mediaSalarial.valor, saldo: mediaSalarial.valor - periodo.despesas, mediaSalarial }
+}
+
+// Receita com "salário" na descrição, ignorando acentos e maiúsculas.
+const ehSalario = (conta) => (conta.descricao || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('salario')
+
+// Média dos salários dos 3 últimos meses com salário até `ateMes`; com menos de 3, usa só o último.
+export function estimarMediaSalarial(contas, ateMes) {
+  const receitas = contas.filter((conta) => conta.tipoConta === 'Receita' && ehSalario(conta) && mesDa(conta) <= ateMes)
+  const comReceita = [...new Set(receitas.map(mesDa))].sort()
+  if (comReceita.length === 0) return null
+
+  const meses = comReceita.length >= 3 ? comReceita.slice(-3) : comReceita.slice(-1)
+  const total = somar(receitas.filter((conta) => meses.includes(mesDa(conta))))
+  return { valor: Math.round((total / meses.length) * 100) / 100, meses }
+}
+
+// A parcela de um mês é paga com o próximo salário, então vence até o mês seguinte. Vencimento depois
+// disso indica que ela já foi registrada como paga na aba Parcelas e o fechamento não deve somar de novo.
+const parcelaDoMesPaga = (conta, mes) => Boolean(conta.dataVencimento) && conta.dataVencimento.slice(0, 7) > deslocarMes(mes, 1)
+
 // Fecha os meses em ordem: registra o que sobrou em cada um (só histórico) e +1 parcela paga
 // nos parcelamentos em andamento, levando o vencimento para o mês seguinte.
 export function simularFechamento(contas, fechamento, meses) {
@@ -58,7 +94,7 @@ export function simularFechamento(contas, fechamento, meses) {
     atual = { mes, saldo: Math.round(saldo * 100) / 100 }
     fechamentos.push(atual)
     lista = lista.map((conta) => (
-      mesDa(conta) <= mes && ehParcelamentoAtivo(conta)
+      mesDa(conta) <= mes && ehParcelamentoAtivo(conta) && !parcelaDoMesPaga(conta, mes)
         ? {
           ...conta,
           parcelaPaga: (conta.parcelaPaga || 0) + 1,

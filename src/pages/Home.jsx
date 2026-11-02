@@ -2,7 +2,7 @@ import './Home.css'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { App } from '@capacitor/app'
-import { MdAdd, MdCalculate, MdChevronRight, MdPeopleAlt, MdReceiptLong, MdRemove } from 'react-icons/md'
+import { MdAdd, MdCalculate, MdChevronRight, MdPeopleAlt, MdRemove, MdSavings } from 'react-icons/md'
 import Cabecalho from '../components/Cabecalho/Cabecalho'
 import Saldo from '../components/Saldo/Saldo'
 import Extrato from '../components/Extrato/Extrato'
@@ -11,6 +11,8 @@ import Parcelamentos from '../components/Parcelamentos/Parcelamentos'
 import Cartoes from '../components/Cartoes/Cartoes'
 import Dashboard from '../components/Dashboard/Dashboard'
 import Simulacao from '../components/Simulacao/Simulacao'
+import Metas from '../components/Metas/Metas'
+import SobraMes from '../components/SobraMes/SobraMes'
 import Navegacao from '../components/Navegacao/Navegacao'
 import Modal from '../components/Modal/Modal'
 import FormConta from '../components/FormConta/FormConta'
@@ -26,6 +28,7 @@ import supabase from '../services/supabase'
 import { buscarAtualizacao } from '../services/atualizacao'
 import { gravarNotificacoesLidas, lerNotificacoesLidas } from '../services/notificacoesLidas'
 import { gerarNotificacoes } from '../utils/notificacoes'
+import { calcularMeta } from '../utils/metas'
 import useHoje from '../hooks/useHoje'
 
 const TITULOS = {
@@ -33,8 +36,9 @@ const TITULOS = {
   extrato: 'Extrato',
   parcelas: 'Parcelamentos',
   cartoes: 'Cartões',
-  dashboard: 'Dashboard',
+  dashboard: 'Dashboards',
   simulacao: 'Simulação',
+  metas: 'Metas e reservas',
   valores: 'Valores por pessoa',
 }
 
@@ -56,7 +60,11 @@ function Home({ saudacao, usuario }) {
   const [tutoriaisVistos, setTutoriaisVistos] = useState(() => usuario.user_metadata?.tutoriais ?? {})
   const [atualizacao, setAtualizacao] = useState(null)
   const [atualizacaoAdiada, setAtualizacaoAdiada] = useState(null)
+  const [sobraPerguntada, setSobraPerguntada] = useState(() => usuario.user_metadata?.sobraPerguntada ?? '')
   const contas = useSelector((state) => state.extrato.contasExtrato)
+  const fechamento = useSelector((state) => state.extrato.fechamento)
+  const metas = useSelector((state) => state.metas.lista)
+  const metasCarregadas = useSelector((state) => state.metas.carregado)
   const carregando = useSelector((state) => state.extrato.carregando)
   const erro = useSelector((state) => state.extrato.erro)
   const erroCartoes = useSelector((state) => state.cartoes.erro)
@@ -122,6 +130,20 @@ function Home({ saudacao, usuario }) {
     gravarNotificacoesLidas(usuario.id, ids)
   }
 
+  // Depois que um mês é fechado com sobra, pergunta uma vez se o usuário quer guardar parte dela
+  // em uma meta ainda não alcançada. O último mês perguntado fica no perfil (vale em todos os aparelhos).
+  const metasEmAberto = metas
+    .filter((meta) => meta.status === 'ativa')
+    .map((meta) => ({ meta, situacao: calcularMeta(meta, hoje.slice(0, 7)) }))
+    .filter(({ situacao }) => !situacao.atingida)
+  const sobraAberta = !carregando && metasCarregadas && !tutorialAberto && !atualizacaoAberta
+    && fechamento?.saldo > 0 && fechamento.mes > sobraPerguntada && metasEmAberto.length > 0
+
+  const fecharSobra = useCallback(() => {
+    setSobraPerguntada(fechamento.mes)
+    supabase.auth.updateUser({ data: { sobraPerguntada: fechamento.mes } })
+  }, [fechamento])
+
   function alterarAba(novaAba) {
     setAba(novaAba)
     window.scrollTo({ top: 0 })
@@ -130,7 +152,7 @@ function Home({ saudacao, usuario }) {
   const acoesRapidas = [
     { rotulo: 'Receita', icone: <MdAdd size={24} />, acao: () => setNovaConta('Receita') },
     { rotulo: 'Despesa', icone: <MdRemove size={24} />, acao: () => setNovaConta('Despesa') },
-    { rotulo: 'Extrato', icone: <MdReceiptLong size={24} />, acao: () => alterarAba('extrato') },
+    { rotulo: 'Metas', icone: <MdSavings size={24} />, acao: () => alterarAba('metas') },
     { rotulo: 'Valores', icone: <MdPeopleAlt size={24} />, acao: () => alterarAba('valores') },
     { rotulo: 'Simular', icone: <MdCalculate size={24} />, acao: () => alterarAba('simulacao') },
   ]
@@ -205,6 +227,8 @@ function Home({ saudacao, usuario }) {
 
           {!carregando && aba === 'simulacao' && <Simulacao onAbrirTutorial={() => abrirTutorial('simulacao')} />}
 
+          {!carregando && aba === 'metas' && <Metas ocultar={ocultarValores} />}
+
           {!carregando && aba === 'valores' && <Total />}
         </div>
       </main>
@@ -249,6 +273,12 @@ function Home({ saudacao, usuario }) {
       {tutorialAberto && (
         <Modal titulo={TUTORIAIS[tutorialAberto].titulo} onFechar={fecharTutorial}>
           <Tutorial key={tutorialAberto} passos={TUTORIAIS[tutorialAberto].passos} onConcluir={fecharTutorial} />
+        </Modal>
+      )}
+
+      {sobraAberta && (
+        <Modal titulo='Guardar a sobra do mês' onFechar={fecharSobra}>
+          <SobraMes mes={fechamento.mes} sobra={fechamento.saldo} metas={metasEmAberto} ocultar={ocultarValores} onConcluir={fecharSobra} />
         </Modal>
       )}
 

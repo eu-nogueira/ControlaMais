@@ -5,7 +5,12 @@ import { adicionarConta, editarConta } from '../../store/extrato'
 import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { calcularUsoCartoes, encontrarCartao, mesmoCartao } from '../../utils/cartoes'
 import { TIPOS_DESPESA } from '../../utils/dashboard'
+import { formatarMes } from '../../utils/mes'
+import { mesesParaFechar } from '../../utils/saldo'
+import useMesAtual from '../../hooks/useMesAtual'
 import './FormConta.css'
+
+const nomeMes = (mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()
 
 function hojeISO() {
   const data = new Date()
@@ -35,6 +40,7 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   const cartoesCadastrados = useSelector((state) => state.cartoes.lista)
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const fechamento = useSelector((state) => state.extrato.fechamento)
+  const mesAtual = useMesAtual()
   const dispatch = useDispatch()
 
   const despesa = tipoConta === 'Despesa'
@@ -45,6 +51,13 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   const outrasContas = conta ? contas.filter((item) => item.id !== conta.id) : contas
   const cartaoEscolhido = encontrarCartao(calcularUsoCartoes(cartoesCadastrados, outrasContas, fechamento), cartao)
 
+  // Despesa do mês atual com o mês passado ainda não quitado: o vencimento decide de qual saldo ela sai.
+  // Vencendo até o mês atual, sai do saldo exibido; depois disso, fica para o próximo salário.
+  const mesesAbertos = mesesParaFechar(outrasContas, fechamento, mesAtual)
+  const mesPassado = mesesAbertos[mesesAbertos.length - 1]
+  const decidirPeloVencimento = despesa && selected && Boolean(mesPassado) && (cadastroData || hojeISO()).slice(0, 7) === mesAtual
+  const descontaDoSaldoAtual = Boolean(dataVencimento) && dataVencimento.slice(0, 7) <= mesAtual
+
   const pendentes = [
     !(valorFormatado > 0) && 'valor',
     !descricao.trim() && 'descrição',
@@ -52,6 +65,7 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
     despesa && !contaFixa && totalParcelas >= 1 && totalParcelas < parcelasPagas && `parcelas (já há ${parcelasPagas} pagas)`,
     despesa && !selected && !responsavel.trim() && 'quem vai te pagar',
     despesa && ehCartao && !cartao.trim() && 'cartão usado',
+    decidirPeloVencimento && !dataVencimento && 'vencimento',
   ].filter(Boolean)
 
   function alterarParcela(quantidade) {
@@ -116,6 +130,19 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
     return totalCompra > cartaoEscolhido.disponivel ? `${disponivel} Este gasto passa do limite disponível.` : disponivel
   }
 
+  function mesSaldoEscolhido() {
+    if (decidirPeloVencimento) return descontaDoSaldoAtual ? mesPassado : mesAtual
+    // Depois de quitado o mês passado, a despesa segue no saldo em que foi descontada.
+    return despesa && selected && conta?.mesSaldo ? conta.mesSaldo : ''
+  }
+
+  function avisoVencimento() {
+    if (!dataVencimento) return `As contas de ${nomeMes(mesPassado)} ainda não foram quitadas: informe o vencimento para saber de qual saldo descontar.`
+    return descontaDoSaldoAtual
+      ? `Vence em ${nomeMes(mesAtual)}: será descontada do saldo atual.`
+      : `Vence depois de ${nomeMes(mesAtual)}: fica para o próximo salário.`
+  }
+
   async function handleAdicao(event) {
     event.preventDefault()
     if (pendentes.length > 0 || salvando) return
@@ -135,7 +162,8 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
         selected: despesa && selected,
         anotarPara: despesa && selected ? anotarPara.trim() : '',
         cartao: despesa && ehCartao ? (cartaoEscolhido?.nome ?? cartao.trim()) : '',
-        categoria: !despesa ? '' : tipoDespesa === 'Outros' ? outroTipo.trim() || 'Outros' : tipoDespesa
+        categoria: !despesa ? '' : tipoDespesa === 'Outros' ? outroTipo.trim() || 'Outros' : tipoDespesa,
+        mesSaldo: mesSaldoEscolhido()
       })).unwrap()
       onConcluir()
     } catch {
@@ -204,7 +232,7 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
                 <input type='text' placeholder='Ex.: Saúde, Educação, Casa' value={outroTipo} onChange={(e) => setOutroTipo(e.target.value)} />
               </label>
             )}
-            <small className='form-dica'>Serve apenas para o Dashboard, no gráfico de pizza que mostra para onde seus gastos estão indo.</small>
+            <small className='form-dica'>Serve apenas para os Dashboards, no comparativo com o mês anterior e no gráfico que mostra para onde seus gastos estão indo.</small>
           </fieldset>
 
           <fieldset className='form-secao'>
@@ -249,8 +277,9 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
               )}
 
               <label className='form-campo'>
-                <span>Vencimento <em>(opcional)</em></span>
+                <span>Vencimento {!decidirPeloVencimento && <em>(opcional)</em>}</span>
                 <input type='date' value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} />
+                {decidirPeloVencimento && <small aria-live='polite'>{avisoVencimento()}</small>}
               </label>
             </div>
           </fieldset>

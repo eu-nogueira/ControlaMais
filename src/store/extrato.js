@@ -20,7 +20,8 @@ function paraConta(linha) {
         anotarPara: linha.anotar_para,
         cartao: linha.cartao ?? '',
         categoria: linha.categoria ?? '',
-        contaFixa: Boolean(linha.conta_fixa)
+        contaFixa: Boolean(linha.conta_fixa),
+        mesSaldo: linha.mes_saldo ?? ''
     }
 }
 
@@ -37,7 +38,8 @@ function paraLinha(conta) {
         anotar_para: conta.anotarPara,
         cartao: conta.cartao,
         categoria: conta.categoria || null,
-        conta_fixa: Boolean(conta.contaFixa)
+        conta_fixa: Boolean(conta.contaFixa),
+        mes_saldo: conta.mesSaldo || null
     }
 }
 

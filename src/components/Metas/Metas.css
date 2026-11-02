@@ -1,0 +1,316 @@
+.metas {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.metas-resumo {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+.metas-resumo div {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+}
+
+.metas-resumo div:last-child {
+    text-align: right;
+}
+
+.metas-resumo span {
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+}
+
+.metas-resumo strong {
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.metas-sobra {
+    padding: .875rem 1rem;
+    border-left: 3px solid var(--cor-primaria);
+    border-radius: 0 var(--raio-pequeno) var(--raio-pequeno) 0;
+    background: var(--cor-superficie-2);
+    font-size: .8125rem;
+    line-height: 1.4;
+}
+
+.metas-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    color: var(--cor-texto-suave);
+    text-align: center;
+}
+
+.metas-vazio p {
+    color: var(--cor-texto);
+    font-weight: 600;
+}
+
+.metas-vazio span {
+    font-size: .875rem;
+    line-height: 1.4;
+}
+
+.metas-lista {
+    display: grid;
+    gap: .75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.meta {
+    display: flex;
+    flex-direction: column;
+    gap: .875rem;
+    padding: 1rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+.meta-topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.meta-topo div {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+    min-width: 0;
+}
+
+.meta-topo strong {
+    font-size: 1.0625rem;
+    overflow-wrap: anywhere;
+}
+
+.meta-tipo {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.meta-status {
+    margin-left: .5rem;
+    padding: .0625rem .5rem;
+    border-radius: 999px;
+    background: var(--cor-superficie-2);
+    font-style: normal;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.meta-atingida .meta-status {
+    background: var(--cor-positivo-fundo);
+    color: var(--cor-positivo);
+}
+
+.meta-inativa:not(.meta-atingida) .meta-barra span {
+    background: var(--cor-texto-suave);
+}
+
+.meta-percentual {
+    flex-shrink: 0;
+    padding: .25rem .625rem;
+    border-radius: 999px;
+    background: var(--cor-primaria-suave);
+    color: var(--cor-primaria);
+    font-size: .8125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.meta-valores {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.meta-valores div {
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+}
+
+.meta-valores div:last-child:not(:first-child) {
+    text-align: right;
+}
+
+.meta-valores span {
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+}
+
+.meta-valores strong {
+    font-variant-numeric: tabular-nums;
+}
+
+.meta-barra {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--cor-superficie-2);
+}
+
+.meta-barra span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--cor-primaria);
+    transition: width .3s ease;
+}
+
+.meta-atingida .meta-barra span {
+    background: var(--cor-positivo);
+}
+
+.meta-situacao {
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+    line-height: 1.4;
+}
+
+.meta-atingida .meta-situacao {
+    color: var(--cor-positivo);
+    font-weight: 600;
+}
+
+.meta-situacao-atrasada {
+    color: var(--cor-negativo);
+}
+
+.meta-movimentar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+}
+
+.meta-historico {
+    border-top: 1px solid var(--cor-borda);
+    padding-top: .75rem;
+    font-size: .875rem;
+}
+
+.meta-historico summary {
+    color: var(--cor-primaria);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.meta-historico ul {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin: .75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.meta-historico li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.meta-historico li div {
+    display: flex;
+    flex-direction: column;
+}
+
+.meta-historico li strong {
+    font-variant-numeric: tabular-nums;
+}
+
+.meta-historico li span {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
+.meta-movimento-excluir {
+    display: grid;
+    place-items: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 .5rem;
+    border: none;
+    border-radius: var(--raio-pequeno);
+    background: transparent;
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.meta-movimento-excluir-confirmar {
+    background: var(--cor-negativo);
+    color: #fff;
+}
+
+.meta-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+.meta-acao {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .5rem .75rem;
+    border: none;
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-superficie-2);
+    color: var(--cor-texto-suave);
+    font-size: .8125rem;
+    font-weight: 500;
+}
+
+.meta-excluir-confirmar {
+    background: var(--cor-negativo);
+    color: #fff;
+}
+
+.meta-acao:disabled,
+.meta-movimento-excluir:disabled {
+    opacity: .7;
+}
+
+.meta-erro {
+    padding: .5rem .75rem;
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-negativo-fundo);
+    color: var(--cor-negativo);
+    font-size: .8125rem;
+}
+
+.meta-historico li .meta-erro {
+    margin-top: .25rem;
+    font-size: .75rem;
+}
+
+@media screen and (min-width: 768px) {
+    .metas-lista {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+}

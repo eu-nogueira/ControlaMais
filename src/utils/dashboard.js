@@ -1,5 +1,6 @@
-import { encontrarCartao, normalizarNomeCartao } from './cartoes'
+import { calcularUsoCartoes, cartoesSemCadastro, comprasEmAberto, mesmoCartao, normalizarNomeCartao } from './cartoes'
 import { ehContaFixa, totalParcelasDe } from './parcelas'
+import { deslocarMes } from './mes'
 
 export const TIPOS_DESPESA = ['Alimentação', 'Transporte', 'Lazer']
 
@@ -30,12 +31,23 @@ export function ultimoMesComDespesa(contas) {
     }, '')
 }
 
-// Soma por nome, sem diferenciar maiúsculas e espaços; mantém a primeira grafia encontrada.
+// Entre grafias do mesmo nome, prefere a mais caprichada: com acentos e iniciando em maiúscula.
+function capricho(rotulo) {
+  const acentos = rotulo.normalize('NFD').length - rotulo.length
+  return acentos + (rotulo.charAt(0) !== rotulo.charAt(0).toLocaleLowerCase('pt-BR') ? 1 : 0)
+}
+
+function escolherGrafia(atual, nova) {
+  return capricho(nova) > capricho(atual) ? nova : atual
+}
+
+// Soma por nome, sem diferenciar acentos, maiúsculas e espaços.
 function agrupar(itens) {
   const grupos = new Map()
   itens.forEach(({ rotulo, valor }) => {
     const chave = normalizarNomeCartao(rotulo)
     const grupo = grupos.get(chave) ?? { chave, rotulo: rotulo.trim(), valor: 0 }
+    grupo.rotulo = escolherGrafia(grupo.rotulo, rotulo.trim())
     grupo.valor += valor
     grupos.set(chave, grupo)
   })
@@ -70,18 +82,67 @@ function montarFatias(grupos, ordenar) {
   return fatias
 }
 
+const VOCE = 'Você'
+
+// "Você" sempre primeiro, para manter a mesma cor em todos os cartões.
+const porResponsavel = (a, b) => (b.rotulo === VOCE) - (a.rotulo === VOCE) || porNome(a, b)
+
+// Uso atual do limite de cada cartão por quem fez o gasto: você ou a pessoa que vai te reembolsar.
+// Cartões cadastrados mostram também o limite disponível; os não cadastrados, só o que foi gasto.
+export function usoCartoesPorResponsavel(cartoes, contas, fechamento) {
+  const semCadastro = cartoesSemCadastro(cartoes, contas, fechamento).map((nome) => ({
+    nome,
+    limite: null,
+    compras: comprasEmAberto(contas, fechamento).filter((compra) => mesmoCartao(compra.conta.cartao, nome))
+  }))
+
+  return [...calcularUsoCartoes(cartoes, contas, fechamento), ...semCadastro].map((cartao) => {
+    const gastos = cartao.compras.map(({ conta, emAberto }) => ({
+      rotulo: conta.selected ? VOCE : conta.responsavel?.trim() || 'Outra pessoa',
+      valor: emAberto
+    }))
+    const usado = gastos.reduce((total, gasto) => total + gasto.valor, 0)
+    const disponivel = cartao.limite ? cartao.limite - usado : 0
+    const fatias = montarFatias(agrupar(gastos), porResponsavel)
+    if (disponivel > 0) fatias.push({ chave: 'disponivel', rotulo: 'Disponível', valor: disponivel, cor: 'var(--serie-disponivel)' })
+
+    return { chave: normalizarNomeCartao(cartao.nome), nome: cartao.nome, limite: cartao.limite, usado, fatias }
+  })
+}
+
+// Gastos que você paga no mês e no mês anterior, no total e por tipo de despesa.
+export function compararComMesAnterior(contas, mes) {
+  const anterior = deslocarMes(mes, -1)
+  const grupos = new Map()
+
+  contas
+    .filter((conta) => conta.tipoConta === 'Despesa' && conta.selected)
+    .forEach((conta) => {
+      const valores = { atual: valorNoMes(conta, mes), anterior: valorNoMes(conta, anterior) }
+      if (valores.atual === 0 && valores.anterior === 0) return
+
+      const rotulo = conta.categoria?.trim() || 'Sem tipo'
+      const chave = normalizarNomeCartao(rotulo)
+      const grupo = grupos.get(chave) ?? { chave, rotulo, atual: 0, anterior: 0 }
+      grupo.rotulo = escolherGrafia(grupo.rotulo, rotulo)
+      grupo.atual += valores.atual
+      grupo.anterior += valores.anterior
+      grupos.set(chave, grupo)
+    })
+
+  const tipos = [...grupos.values()].sort((a, b) => b.atual - a.atual || b.anterior - a.anterior)
+  const somar = (campo) => tipos.reduce((total, tipo) => total + tipo[campo], 0)
+  return { mesAnterior: anterior, atual: somar('atual'), anterior: somar('anterior'), tipos }
+}
+
 // Considera apenas as despesas que o usuário paga; as que outra pessoa vai pagar ficam de fora.
-export function dadosDashboard(contas, cartoes, mes) {
+export function dadosDashboard(contas, mes) {
   const minhas = contas
     .filter((conta) => conta.tipoConta === 'Despesa' && conta.selected)
     .map((conta) => ({ conta, valor: valorNoMes(conta, mes) }))
     .filter(({ valor }) => valor > 0)
 
   const soma = (itens) => itens.reduce((total, { valor }) => total + valor, 0)
-
-  const porCartao = minhas
-    .filter(({ conta }) => conta.cartao?.trim())
-    .map(({ conta, valor }) => ({ rotulo: encontrarCartao(cartoes, conta.cartao)?.nome ?? conta.cartao, valor }))
 
   const porPessoa = minhas
     .filter(({ conta }) => conta.anotarPara?.trim())
@@ -90,10 +151,8 @@ export function dadosDashboard(contas, cartoes, mes) {
   const comTipo = minhas.filter(({ conta }) => conta.categoria?.trim())
 
   return {
-    totalMeu: soma(minhas),
     semTipo: soma(minhas) - soma(comTipo),
     tipos: montarFatias(agrupar(comTipo.map(({ conta, valor }) => ({ rotulo: conta.categoria, valor }))), porTipo),
-    cartoes: montarFatias(agrupar(porCartao), porNome),
     pessoas: montarFatias(agrupar(porPessoa), porNome),
   }
 }

@@ -8,6 +8,7 @@
     --serie-5: #d55181;
     --serie-6: #008300;
     --serie-demais: #6b6a65;
+    --serie-disponivel: #3a4552;
 
     display: flex;
     flex-direction: column;
@@ -22,6 +23,7 @@
     --serie-5: #e87ba4;
     --serie-6: #008300;
     --serie-demais: #898781;
+    --serie-disponivel: #d3d8df;
 }
 
 .dashboard-meses {
@@ -84,4 +86,25 @@
 .dashboard-graficos {
     display: grid;
     gap: 1rem;
+}
+
+.dashboard-cartoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.dashboard-cartoes-opcao {
+    padding: .5rem .875rem;
+    border: 1.5px solid var(--cor-borda);
+    border-radius: 999px;
+    background: var(--cor-superficie);
+    font-size: .875rem;
+    font-weight: 500;
+}
+
+.dashboard-cartoes-opcao-ativa {
+    border-color: var(--cor-primaria);
+    background: var(--cor-primaria-suave);
+    color: var(--cor-primaria);
 }
