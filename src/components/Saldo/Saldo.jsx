@@ -25,8 +25,6 @@ function Saldo({ ocultar }) {
     const nomeMeses = juntarLista(mesesAbertos.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()))
     const proximoSalario = projetarProximoSalario(contas, fechamento, mesAtual)
     const nomeMesAtual = formatarMes(mesAtual).replace(/ de \d{4}$/, '').toLowerCase()
-    const nomeMesesMedia = mediaSalarial && juntarLista(mediaSalarial.meses.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()))
-
     async function handleQuitar() {
         if (!confirmarQuitacao) {
             setConfirmarQuitacao(true)
@@ -57,11 +55,16 @@ function Saldo({ ocultar }) {
         <p className={`saldo-valor ${saldo < 0 ? 'saldo-valor-negativo' : ''}`}>
             {formatarMoeda(saldo, ocultar)}
         </p>
-        <p className='saldo-base'>
-            {mediaSalarial
-                ? `Considera a média salarial (${mediaSalarial.meses.length === 1 ? `salário de ${nomeMesesMedia}` : `média de ${nomeMesesMedia}`}) até o próximo salário ser registrado`
-                : 'Considera o salário do próximo dia de pagamento'}
-        </p>
+         {mesesAbertos.length > 0 && proximoSalario && (
+                    <div className='saldo-proximo' aria-label={`Saldo do próximo salário (${nomeMesAtual})`}>
+                        <div className='saldo-proximo-topo'>
+                            <span>Próximo salário</span>
+                            <strong className={proximoSalario.saldo < 0 ? 'saldo-valor-negativo' : ''}>
+                                {formatarMoeda(proximoSalario.saldo, ocultar)}
+                            </strong>
+                        </div>
+                    </div>
+                )}
         {explicacaoAberta && (
             <div id='saldo-explicacao' className='saldo-explicacao'>
                 <p>
@@ -128,21 +131,6 @@ function Saldo({ ocultar }) {
 
         {mesesAbertos.length > 0 && (
             <div className='saldo-quitar'>
-                {proximoSalario && (
-                    <div className='saldo-proximo' aria-label={`Saldo do próximo salário (${nomeMesAtual})`}>
-                        <div className='saldo-proximo-topo'>
-                            <span>Próximo salário ({nomeMesAtual})</span>
-                            <strong className={proximoSalario.saldo < 0 ? 'saldo-valor-negativo' : ''}>
-                                {formatarMoeda(proximoSalario.saldo, ocultar)}
-                            </strong>
-                        </div>
-                        <p>
-                            {proximoSalario.mediaSalarial ? 'Média salarial' : 'Receitas'} de {formatarMoeda(proximoSalario.receitas, ocultar)}
-                            {' '}menos {formatarMoeda(proximoSalario.despesas, ocultar)} em parcelas do mês e despesas que ficaram para o próximo salário.
-                            Passa a ser o saldo disponível ao quitar o mês passado.
-                        </p>
-                    </div>
-                )}
                 <button
                     className={`saldo-quitar-botao ${confirmarQuitacao ? 'saldo-quitar-confirmar' : ''}`}
                     onClick={handleQuitar}
