@@ -18,6 +18,16 @@ function hojeISO() {
   return data.toISOString().slice(0, 10)
 }
 
+// Na edição, só marca a escolha quando o saldo salvo difere do que o vencimento indicaria.
+function origemSaldoInicial(conta) {
+  if (!conta?.mesSaldo) return ''
+  const mesCadastro = conta.dataCadastro.slice(0, 7)
+  const atual = conta.mesSaldo < mesCadastro
+  const peloVencimento = Boolean(conta.dataVencimento) && conta.dataVencimento.slice(0, 7) <= mesCadastro
+  if (atual === peloVencimento && conta.dataVencimento) return ''
+  return atual ? 'atual' : 'proximo'
+}
+
 // Com `conta`, o formulário edita a movimentação existente em vez de criar uma nova.
 function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   const [descricao, setDescricao] = useState(conta?.descricao ?? '')
@@ -32,6 +42,8 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   const [ehCartao, setEhCartao] = useState(Boolean(conta?.cartao))
   const [cartao, setCartao] = useState(conta?.cartao ?? '')
   const [contaFixa, setContaFixa] = useState(conta?.contaFixa ?? false)
+  // '' segue o vencimento; 'atual' desconta do saldo do mês passado; 'proximo', do próximo salário.
+  const [origemSaldo, setOrigemSaldo] = useState(() => origemSaldoInicial(conta))
   const categoriaInicial = conta?.categoria ?? ''
   const tipoConhecido = TIPOS_DESPESA.includes(categoriaInicial)
   const [tipoDespesa, setTipoDespesa] = useState(tipoConhecido ? categoriaInicial : categoriaInicial ? 'Outros' : '')
@@ -58,7 +70,9 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   const mesesAbertos = mesesParaFechar(outrasContas, fechamento, mesAtual)
   const mesPassado = mesesAbertos[mesesAbertos.length - 1]
   const decidirPeloVencimento = despesa && selected && Boolean(mesPassado) && (cadastroData || hojeISO()).slice(0, 7) === mesAtual
-  const descontaDoSaldoAtual = Boolean(dataVencimento) && dataVencimento.slice(0, 7) <= mesAtual
+  const descontaPeloVencimento = Boolean(dataVencimento) && dataVencimento.slice(0, 7) <= mesAtual
+  // A escolha do usuário (saldo atual ou próximo salário) tem prioridade sobre o vencimento.
+  const descontaDoSaldoAtual = origemSaldo ? origemSaldo === 'atual' : descontaPeloVencimento
 
   const pendentes = [
     !(valorFormatado > 0) && 'valor',
@@ -67,7 +81,7 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
     despesa && !contaFixa && totalParcelas >= 1 && totalParcelas < parcelasPagas && `parcelas (já há ${parcelasPagas} pagas)`,
     despesa && !selected && !responsavel.trim() && 'quem vai te pagar',
     despesa && ehCartao && !cartao.trim() && 'cartão usado',
-    decidirPeloVencimento && !dataVencimento && 'vencimento',
+    decidirPeloVencimento && !origemSaldo && !dataVencimento && 'vencimento ou de onde descontar',
   ].filter(Boolean)
 
   function alterarParcela(quantidade) {
@@ -139,9 +153,11 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
     return despesa && selected && conta?.mesSaldo ? conta.mesSaldo : ''
   }
 
-  function avisoVencimento() {
-    if (!dataVencimento) return `As contas de ${nomeMes(mesPassado)} ainda não foram quitadas: informe o vencimento para saber de qual saldo descontar.`
-    return descontaDoSaldoAtual
+  function avisoOrigemSaldo() {
+    if (origemSaldo === 'atual') return `Será descontada do saldo atual (${nomeMes(mesPassado)}), independente do vencimento.`
+    if (origemSaldo === 'proximo') return `Fica para o próximo salário (${nomeMes(mesAtual)}), independente do vencimento.`
+    if (!dataVencimento) return `As contas de ${nomeMes(mesPassado)} ainda não foram quitadas: escolha de onde descontar ou informe o vencimento.`
+    return descontaPeloVencimento
       ? `Vence em ${nomeMes(mesAtual)}: será descontada do saldo atual.`
       : `Vence depois de ${nomeMes(mesAtual)}: fica para o próximo salário.`
   }
@@ -280,11 +296,35 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
               )}
 
               <label className='form-campo'>
-                <span>Vencimento {!decidirPeloVencimento && <em>(opcional)</em>}</span>
+                <span>Vencimento {(!decidirPeloVencimento || origemSaldo) && <em>(opcional)</em>}</span>
                 <input type='date' value={dataVencimento} onChange={(e) => setDataVencimento(e.target.value)} />
-                {decidirPeloVencimento && <small aria-live='polite'>{avisoVencimento()}</small>}
               </label>
             </div>
+
+            {decidirPeloVencimento && (
+              <div className='form-campo'>
+                <span id='rotulo-origem-saldo'>De onde descontar?</span>
+                <div className='form-cartoes' role='radiogroup' aria-labelledby='rotulo-origem-saldo'>
+                  {[
+                    ['', 'Pelo vencimento'],
+                    ['atual', `Saldo atual (${nomeMes(mesPassado)})`],
+                    ['proximo', `Próximo salário (${nomeMes(mesAtual)})`],
+                  ].map(([opcao, rotulo]) => (
+                    <button
+                      key={opcao || 'vencimento'}
+                      type='button'
+                      role='radio'
+                      aria-checked={origemSaldo === opcao}
+                      className={`form-cartoes-opcao ${origemSaldo === opcao ? 'form-cartoes-opcao-ativa' : ''}`}
+                      onClick={() => setOrigemSaldo(opcao)}
+                    >
+                      {rotulo}
+                    </button>
+                  ))}
+                </div>
+                <small aria-live='polite'>{avisoOrigemSaldo()}</small>
+              </div>
+            )}
           </fieldset>
 
           <fieldset className='form-secao'>

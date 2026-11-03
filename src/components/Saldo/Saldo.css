@@ -204,3 +204,30 @@
         grid-template-columns: 1fr;
     }
 }
+
+.saldo-proximo {
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
+    padding: .75rem;
+    border-radius: var(--raio-pequeno);
+    background: rgba(255, 255, 255, .1);
+}
+
+.saldo-proximo-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .25rem .75rem;
+}
+
+.saldo-proximo-topo span {
+    font-size: .8125rem;
+    opacity: .85;
+}
+
+.saldo-proximo-topo strong {
+    font-size: 1.125rem;
+    font-variant-numeric: tabular-nums;
+}

@@ -110,3 +110,15 @@ export function simularFechamento(contas, fechamento, meses) {
 
   return { fechamentos, alteradas }
 }
+
+// Enquanto houver meses a fechar, mostra como ficará o saldo do próximo salário depois da quitação:
+// simula o fechamento (sem gravar) e calcula o saldo exibido com o resultado.
+export function projetarProximoSalario(contas, fechamento, mesAtual) {
+  const meses = mesesParaFechar(contas, fechamento, mesAtual)
+  if (meses.length === 0) return null
+
+  const { fechamentos, alteradas } = simularFechamento(contas, fechamento, meses)
+  const porId = new Map(alteradas.map((conta) => [conta.id, conta]))
+  const contasQuitadas = contas.map((conta) => (porId.has(conta.id) ? { ...conta, ...porId.get(conta.id) } : conta))
+  return calcularSaldoExibido(contasQuitadas, fechamentos[fechamentos.length - 1], mesAtual)
+}

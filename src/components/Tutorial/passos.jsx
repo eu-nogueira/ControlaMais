@@ -47,7 +47,8 @@ export const PASSOS_GERAL = [
     conteudo: (
       <>
         <p>No começo do mês, o saldo continua sendo o do mês passado <strong>até você tocar em "Contas do mês passado quitadas"</strong>.</p>
-        <p>Antes disso, ao registrar uma despesa do mês atual, <strong>o vencimento é obrigatório</strong> e decide de onde ela sai:</p>
+        <p>Antes disso, ao registrar uma despesa do mês atual, você escolhe <strong>de onde descontar</strong>: do <strong>saldo atual</strong> ou do <strong>próximo salário</strong>. Essa escolha vale mais que o vencimento.</p>
+        <p>Se deixar em "Pelo vencimento", <strong>o vencimento é obrigatório</strong> e decide de onde ela sai:</p>
         <ul>
           <li><strong>Vence neste mês:</strong> é descontada do saldo atual.</li>
           <li><strong>Vence depois:</strong> fica para o <strong>próximo salário</strong> e só é descontada depois de quitar o mês passado.</li>

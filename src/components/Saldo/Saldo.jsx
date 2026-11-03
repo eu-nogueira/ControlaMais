@@ -4,7 +4,7 @@ import { MdArrowDownward, MdArrowUpward, MdInfoOutline, MdTaskAlt } from 'react-
 import { quitarMesesAnteriores } from '../../store/extrato'
 import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { formatarMes } from '../../utils/mes'
-import { calcularSaldoExibido, mesesParaFechar } from '../../utils/saldo'
+import { calcularSaldoExibido, mesesParaFechar, projetarProximoSalario } from '../../utils/saldo'
 import useMesAtual from '../../hooks/useMesAtual'
 import './Saldo.css'
 
@@ -23,6 +23,8 @@ function Saldo({ ocultar }) {
 
     const mesesAbertos = mesesParaFechar(contas, fechamento, mesAtual)
     const nomeMeses = juntarLista(mesesAbertos.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()))
+    const proximoSalario = projetarProximoSalario(contas, fechamento, mesAtual)
+    const nomeMesAtual = formatarMes(mesAtual).replace(/ de \d{4}$/, '').toLowerCase()
     const nomeMesesMedia = mediaSalarial && juntarLista(mediaSalarial.meses.map((mes) => formatarMes(mes).replace(/ de \d{4}$/, '').toLowerCase()))
 
     async function handleQuitar() {
@@ -73,8 +75,9 @@ function Saldo({ ocultar }) {
                     O que sobrar no fim do mês fica na conta para gastos no débito e <strong>não passa para o mês seguinte</strong>.
                 </p>
                 <p>
-                    Enquanto as <strong>contas do mês passado não forem quitadas</strong>, uma despesa do mês atual só é descontada
-                    do saldo exibido se vencer neste mês. Vencendo depois, fica para o próximo salário.
+                    Enquanto as <strong>contas do mês passado não forem quitadas</strong>, ao registrar uma despesa do mês atual você
+                    escolhe se ela sai do saldo exibido ou do próximo salário. Sem essa escolha, vale o vencimento: vencendo neste mês,
+                    sai do saldo exibido; vencendo depois, fica para o próximo salário.
                 </p>
                 <p>
                     Depois de quitar o mês passado, enquanto o próximo salário não for registrado, ele é estimado pela
@@ -125,6 +128,21 @@ function Saldo({ ocultar }) {
 
         {mesesAbertos.length > 0 && (
             <div className='saldo-quitar'>
+                {proximoSalario && (
+                    <div className='saldo-proximo' aria-label={`Saldo do próximo salário (${nomeMesAtual})`}>
+                        <div className='saldo-proximo-topo'>
+                            <span>Próximo salário ({nomeMesAtual})</span>
+                            <strong className={proximoSalario.saldo < 0 ? 'saldo-valor-negativo' : ''}>
+                                {formatarMoeda(proximoSalario.saldo, ocultar)}
+                            </strong>
+                        </div>
+                        <p>
+                            {proximoSalario.mediaSalarial ? 'Média salarial' : 'Receitas'} de {formatarMoeda(proximoSalario.receitas, ocultar)}
+                            {' '}menos {formatarMoeda(proximoSalario.despesas, ocultar)} em parcelas do mês e despesas que ficaram para o próximo salário.
+                            Passa a ser o saldo disponível ao quitar o mês passado.
+                        </p>
+                    </div>
+                )}
                 <button
                     className={`saldo-quitar-botao ${confirmarQuitacao ? 'saldo-quitar-confirmar' : ''}`}
                     onClick={handleQuitar}
