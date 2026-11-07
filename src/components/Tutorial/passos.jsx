@@ -1,5 +1,5 @@
 import {
-  MdAccountBalanceWallet, MdAdd, MdAttachMoney, MdBalance, MdCalculate, MdCompareArrows, MdCreditCard, MdHome, MdInfoOutline, MdInsights, MdNotificationsNone,
+  MdAccountBalanceWallet, MdAdd, MdAndroid, MdAttachMoney, MdBalance, MdCalculate, MdCompareArrows, MdCreditCard, MdHome, MdInfoOutline, MdInsights, MdNotificationsNone,
   MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSave, MdSavings, MdShield, MdShoppingCart, MdSwapHoriz,
   MdTaskAlt, MdTipsAndUpdates, MdTune, MdVisibility
 } from 'react-icons/md'
@@ -23,7 +23,7 @@ export const PASSOS_GERAL = [
     icone: <MdAttachMoney size={ICONE} />,
     conteudo: (
       <>
-        <p>No topo fica o seu <strong>saldo</strong>. Logo abaixo, os atalhos para registrar receitas e despesas, acompanhar suas metas, ver os valores por pessoa e fazer simulações.</p>
+        <p>No topo fica o seu <strong>saldo</strong>. Logo abaixo, os atalhos para registrar receitas e despesas, acompanhar suas metas, ver seus cartões e fazer simulações.</p>
         <p>Use o ícone de <strong>olho</strong> <MdVisibility size={16} aria-hidden='true' /> no cabeçalho para esconder o saldo e a renda comprometida quando estiver em público.</p>
       </>
     ),
@@ -53,7 +53,7 @@ export const PASSOS_GERAL = [
           <li><strong>Vence neste mês:</strong> é descontada do saldo atual.</li>
           <li><strong>Vence depois:</strong> fica para o <strong>próximo salário</strong> e só é descontada depois de quitar o mês passado.</li>
         </ul>
-        <p>Ao quitar, o novo saldo desconta as <strong>parcelas a pagar do mês</strong> (as mesmas da aba Parcelas) e as despesas que ficaram para o próximo salário.</p>
+        <p>Ao quitar, o novo saldo desconta as <strong>parcelas a pagar do mês</strong> (as mesmas da aba Parcelas) e as despesas que ficaram para o próximo salário. Na aba <strong>Acertos</strong>, o mês quitado passa a aparecer como <strong>Pago</strong>.</p>
         <p>Até o próximo salário ser registrado, ele é estimado pela <strong>média salarial</strong>: a média das receitas com <strong>"salário" na descrição</strong> dos 3 últimos meses ou, se ainda não houver 3, a do último mês.</p>
         <p>Se sobrou dinheiro no mês quitado e você tem metas em andamento, o app pergunta uma vez se quer <strong>guardar parte da sobra</strong> em uma delas.</p>
       </>
@@ -75,20 +75,32 @@ export const PASSOS_GERAL = [
     conteudo: (
       <>
         <p>Veja as movimentações mês a mês. Filtre por receitas, despesas ou por uma <strong>data específica</strong>.</p>
+        <p>Parcelados aparecem em todos os meses do parcelamento, com quantas parcelas já foram pagas, igual à aba Parcelas.</p>
         <p>Toque em uma movimentação para ver os detalhes, editar ou excluir.</p>
       </>
     ),
   },
   {
-    titulo: 'Parcelas, cartões e dashboards',
+    titulo: 'Parcelas, acertos e dashboards',
     icone: <MdPieChart size={ICONE} />,
     conteudo: (
       <ul>
         <li><MdCreditCard size={16} aria-hidden='true' /> <strong>Parcelas:</strong> quanto falta pagar e registro das parcelas pagas.</li>
-        <li><MdPayment size={16} aria-hidden='true' /> <strong>Cartões:</strong> seus cartões e o que está em cada um.</li>
+        <li><MdPeopleAlt size={16} aria-hidden='true' /> <strong>Acertos:</strong> quanto você tem a receber e a pagar referente a outras pessoas, mês a mês.</li>
         <li><MdPieChart size={16} aria-hidden='true' /> <strong>Dashboards:</strong> seus gastos comparados com o mês anterior, para onde eles estão indo, quem está usando cada cartão e a projeção da sobra nos próximos meses.</li>
-        <li><MdPeopleAlt size={16} aria-hidden='true' /> <strong>Valores:</strong> quanto você tem a receber e a pagar referente a outras pessoas.</li>
+        <li><MdPayment size={16} aria-hidden='true' /> <strong>Cartões:</strong> seus cartões e o que está em cada um.</li>
       </ul>
+    ),
+  },
+  {
+    titulo: 'Acertos entre pessoas',
+    icone: <MdPeopleAlt size={ICONE} />,
+    conteudo: (
+      <>
+        <p>Use as setas no topo para escolher o mês. Cada despesa entra no <strong>mês em que foi registrada</strong>; se você escolheu descontá-la do <strong>saldo atual</strong>, ela entra no mês desse saldo.</p>
+        <p>Parcelados e contas fixas aparecem com o valor da parcela em cada mês seguinte, <strong>até serem quitados</strong>.</p>
+        <p>Abaixo do mês aparece se ele está <strong>Em aberto</strong> ou <strong>Pago</strong>: vira Pago quando você toca em "Contas do mês passado quitadas". Toque em uma pessoa para ver as despesas daquele mês.</p>
+      </>
     ),
   },
   {
@@ -112,6 +124,19 @@ export const PASSOS_GERAL = [
     icone: <MdCalculate size={ICONE} />,
     conteudo: (
       <p>Vai pegar um empréstimo ou vai receber um dinheiro extra, como 13º ou Férias? A <strong>Simulação</strong> mostra o efeito nas suas parcelas antes de você decidir. Ela tem um tutorial próprio, mais completo.</p>
+    ),
+  },
+  {
+    // Só aparece no navegador de aparelhos Android, quando há APK publicado.
+    titulo: 'App para Android',
+    icone: <MdAndroid size={ICONE} />,
+    soAndroid: true,
+    conteudo: (
+      <>
+        <p>Você também pode usar o Controla+ como <strong>app no seu Android</strong>, direto da tela inicial do celular.</p>
+        <p>Para instalar, abra <strong>Minha conta</strong>, tocando no seu nome, e use <strong>Baixar app para Android</strong> na seção Ajuda.</p>
+        <p>Se for pedido, permita instalar apps desta fonte.</p>
+      </>
     ),
   },
   {

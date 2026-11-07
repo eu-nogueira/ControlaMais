@@ -13,6 +13,28 @@
     font-weight: 600;
 }
 
+.tutorial-progresso-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    min-height: 32px;
+}
+
+.tutorial-pular {
+    padding: .375rem .625rem;
+    border: none;
+    border-radius: var(--raio-pequeno);
+    background: transparent;
+    color: var(--cor-primaria);
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
+.tutorial-pular:hover {
+    background: var(--cor-primaria-suave);
+}
+
 .tutorial-barra {
     height: 4px;
     overflow: hidden;

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { MdChevronLeft, MdChevronRight } from 'react-icons/md'
+import SeletorMes from '../SeletorMes/SeletorMes'
 import ComparacaoMeses from '../ComparacaoMeses/ComparacaoMeses'
 import GraficoPizza from '../GraficoPizza/GraficoPizza'
 import Projecao from '../Projecao/Projecao'
 import { dadosDashboard, ultimoMesComDespesa, usoCartoesPorResponsavel } from '../../utils/dashboard'
 import { formatarMoeda } from '../../utils/formatar'
-import { PRIMEIRO_MES, deslocarMes, formatarMes } from '../../utils/mes'
+import { PRIMEIRO_MES, deslocarMes } from '../../utils/mes'
 import useMesAtual from '../../hooks/useMesAtual'
 import './Dashboard.css'
 
@@ -42,15 +42,7 @@ function Dashboard({ ocultar }) {
 
   return (
     <div className='dashboard'>
-      <div className='dashboard-meses'>
-        <button onClick={() => navegarMes(-1)} disabled={mes <= PRIMEIRO_MES} aria-label='Mês anterior'>
-          <MdChevronLeft size={24} />
-        </button>
-        <strong aria-live='polite'>{formatarMes(mes)}</strong>
-        <button onClick={() => navegarMes(1)} disabled={mes >= ultimoMes} aria-label='Próximo mês'>
-          <MdChevronRight size={24} />
-        </button>
-      </div>
+      <SeletorMes mes={mes} primeiroMes={PRIMEIRO_MES} ultimoMes={ultimoMes} onNavegar={navegarMes} />
 
       <ComparacaoMeses contas={contas} mes={mes} ocultar={ocultar} />
 

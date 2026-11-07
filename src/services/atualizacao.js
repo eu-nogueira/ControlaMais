@@ -40,3 +40,21 @@ export async function baixarEInstalar(versao, onProgresso) {
     ouvinte.remove()
   }
 }
+
+// Site aberto no navegador de um aparelho Android (fora do app instalado).
+export function ehNavegadorAndroid() {
+  return !Capacitor.isNativePlatform() && /android/i.test(window.navigator.userAgent)
+}
+
+// APK mais recente, para oferecer o download a quem usa o site no Android.
+export async function buscarApkMaisRecente() {
+  if (!ehNavegadorAndroid()) return null
+
+  const { data, error } = await supabase
+    .from('versoes_app')
+    .select('url_apk')
+    .order('codigo_versao', { ascending: false })
+    .limit(1)
+  if (error) throw error
+  return data[0] ?? null
+}

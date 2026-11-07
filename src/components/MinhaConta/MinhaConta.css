@@ -94,3 +94,8 @@
     background: var(--cor-positivo-fundo);
     color: var(--cor-positivo);
 }
+
+/* Link com aparência de botão (ex.: baixar o app). */
+a.botao {
+    text-decoration: none;
+}

@@ -4,7 +4,7 @@ import { TEMAS, aplicarTema, lerTemaLocal } from '../../services/tema'
 import { mensagemErro } from '../../services/erros'
 import './MinhaConta.css'
 
-function MinhaConta({ usuario, onAbrirTutorial }) {
+function MinhaConta({ usuario, urlApk, onAbrirTutorial }) {
   const nomeAtual = usuario.user_metadata?.nome ?? ''
   const [nome, setNome] = useState(nomeAtual)
   const [salvandoNome, setSalvandoNome] = useState(false)
@@ -120,6 +120,7 @@ function MinhaConta({ usuario, onAbrirTutorial }) {
         <h3>Ajuda</h3>
         <button type='button' className='botao botao-secundario' onClick={() => onAbrirTutorial('geral')}>Ver tutorial do app</button>
         <button type='button' className='botao botao-secundario' onClick={() => onAbrirTutorial('simulacao')}>Ver tutorial da Simulação</button>
+        {urlApk && <a className='botao botao-secundario' href={urlApk} download>Baixar app para Android</a>}
       </section>
 
       <form className='minha-conta-secao' onSubmit={handleSalvarSenha}>

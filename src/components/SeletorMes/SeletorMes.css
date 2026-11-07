@@ -1,0 +1,52 @@
+.seletor-mes {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .375rem;
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra);
+}
+
+.seletor-mes-titulo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .0625rem;
+}
+
+.seletor-mes-titulo small {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
+.seletor-mes-titulo small.seletor-mes-legenda-positiva {
+    color: var(--cor-positivo);
+    font-weight: 600;
+}
+
+.seletor-mes strong {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.seletor-mes button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--cor-primaria);
+}
+
+.seletor-mes button:hover:not(:disabled) {
+    background: var(--cor-primaria-suave);
+}
+
+.seletor-mes button:disabled {
+    color: var(--cor-texto-suave);
+    opacity: .35;
+}

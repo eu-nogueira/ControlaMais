@@ -1,4 +1,4 @@
-import { MdCallReceived, MdChevronRight, MdErrorOutline, MdEvent, MdNotificationsNone } from 'react-icons/md'
+import { MdAndroid, MdCallReceived, MdChevronRight, MdErrorOutline, MdEvent, MdNotificationsNone } from 'react-icons/md'
 import { DIAS_AVISO } from '../../utils/notificacoes'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
 import { ehContaFixa } from '../../utils/parcelas'
@@ -12,7 +12,14 @@ function prazo(dias) {
   return `vence em ${dias} dias`
 }
 
-function textos({ conta, dias, aReceber }, ocultar) {
+function textos({ tipo, conta, dias, aReceber }, ocultar) {
+  if (tipo === 'app') {
+    return {
+      titulo: 'Baixe o app para Android',
+      texto: 'Use o Controla+ como app no celular. Toque aqui e, em Minha conta, use "Baixar app para Android" na seção Ajuda.'
+    }
+  }
+
   const fixa = ehContaFixa(conta)
   const numero = `${(conta.parcelaPaga || 0) + 1} de ${conta.parcela}`
   const valor = formatarMoeda(conta.valorFormatado, ocultar)
@@ -34,12 +41,13 @@ function textos({ conta, dias, aReceber }, ocultar) {
 }
 
 function icone(notificacao) {
+  if (notificacao.tipo === 'app') return <MdAndroid size={22} />
   if (notificacao.vencida) return <MdErrorOutline size={22} />
   if (notificacao.aReceber) return <MdCallReceived size={22} />
   return <MdEvent size={22} />
 }
 
-function Notificacoes({ notificacoes, novas, ocultar, onVerParcelas }) {
+function Notificacoes({ notificacoes, novas, ocultar, onVerParcelas, onAbrirConta }) {
   if (notificacoes.length === 0) {
     return (
       <div className='notificacoes-vazio'>
@@ -59,7 +67,7 @@ function Notificacoes({ notificacoes, novas, ocultar, onVerParcelas }) {
           <li key={notificacao.id}>
             <button
               className={`notificacao ${notificacao.vencida ? 'notificacao-vencida' : ''}`}
-              onClick={onVerParcelas}
+              onClick={notificacao.tipo === 'app' ? onAbrirConta : onVerParcelas}
             >
               <span className='notificacao-icone'>{icone(notificacao)}</span>
               <span className='notificacao-conteudo'>

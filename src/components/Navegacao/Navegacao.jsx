@@ -5,11 +5,11 @@ const ABAS = [
   { valor: 'inicio', rotulo: 'Início', icone: <MdHome size={24} /> },
   { valor: 'extrato', rotulo: 'Extrato', icone: <MdReceiptLong size={24} /> },
   { valor: 'parcelas', rotulo: 'Parcelas', icone: <MdCreditCard size={24} /> },
-  { valor: 'cartoes', rotulo: 'Cartões', icone: <MdPayment size={24} /> },
+  { valor: 'valores', rotulo: 'Acertos', icone: <MdPeopleAlt size={24} /> },
   { valor: 'dashboard', rotulo: 'Dashboards', icone: <MdPieChart size={24} /> },
-  // No celular, Metas, Valores e Simulação ficam fora da barra (acessíveis pelas ações rápidas da tela Início).
+  // No celular, Metas, Cartões e Simulação ficam fora da barra (acessíveis pelas ações rápidas da tela Início).
   { valor: 'metas', rotulo: 'Metas', icone: <MdSavings size={24} />, soDesktop: true },
-  { valor: 'valores', rotulo: 'Valores', icone: <MdPeopleAlt size={24} />, soDesktop: true },
+  { valor: 'cartoes', rotulo: 'Cartões', icone: <MdPayment size={24} />, soDesktop: true },
   { valor: 'simulacao', rotulo: 'Simulação', icone: <MdCalculate size={24} />, soDesktop: true },
 ]
 

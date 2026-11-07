@@ -27,7 +27,7 @@ function agruparPorData(itens) {
 }
 
 // Parcelados aparecem em todos os meses do parcelamento, no mesmo dia da compra,
-// com o número da parcela daquele mês; contas fixas, em todos os meses a partir do cadastro;
+// com a mesma contagem de parcelas pagas da aba Parcelas; contas fixas, em todos os meses a partir do cadastro;
 // as demais movimentações só no mês em que foram feitas.
 function itensDoMes(contas, mes) {
   return contas
@@ -37,8 +37,7 @@ function itensDoMes(contas, mes) {
       if (deslocamento < 0 || deslocamento >= parcelas) return null
       return {
         conta,
-        data: deslocarData(conta.dataCadastro, deslocamento),
-        numeroParcela: parcelas > 1 ? deslocamento + 1 : null
+        data: deslocarData(conta.dataCadastro, deslocamento)
       }
     })
     .filter(Boolean)
@@ -82,7 +81,7 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
 
   const itens = comFiltro
     ? itensDoMes(contas, mes)
-    : [...contas].reverse().map((conta) => ({ conta, data: conta.dataCadastro, numeroParcela: null }))
+    : [...contas].reverse().map((conta) => ({ conta, data: conta.dataCadastro }))
 
   const itensFiltrados = itens
     .filter(({ conta }) => filtro === 'Todos' || conta.tipoConta === filtro)
@@ -156,7 +155,7 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
           <section key={`${grupo.data}-${indice}`} className='extrato-grupo'>
             <h3 className='extrato-data'>{formatarDataISO(grupo.data)}</h3>
             <ul className='extrato-lista'>
-              {grupo.itens.map(({ conta, numeroParcela }) => {
+              {grupo.itens.map(({ conta }) => {
                 const despesa = conta.tipoConta === 'Despesa'
                 return (
                   <li key={conta.id}>
@@ -169,8 +168,7 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
                         <span className='extrato-detalhe'>
                           {conta.tipoConta}
                           {ehContaFixa(conta) && ' · conta fixa'}
-                          {despesa && !ehContaFixa(conta) && numeroParcela && ` · parcela ${numeroParcela} de ${conta.parcela}`}
-                          {despesa && !ehContaFixa(conta) && !numeroParcela && Number(conta.parcela) > 1 && ` · ${conta.parcelaPaga || 0}/${conta.parcela} parcelas`}
+                          {despesa && !ehContaFixa(conta) && Number(conta.parcela) > 1 && ` · ${conta.parcelaPaga || 0} de ${conta.parcela} pagas`}
                           {despesa && !conta.selected && (conta.responsavel ? ` · ${conta.responsavel} vai pagar` : ' · outra pessoa paga')}
                         </span>
                       </span>

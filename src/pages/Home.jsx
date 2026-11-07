@@ -2,7 +2,7 @@ import './Home.css'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { App } from '@capacitor/app'
-import { MdAdd, MdCalculate, MdChevronRight, MdPeopleAlt, MdRemove, MdSavings } from 'react-icons/md'
+import { MdAdd, MdCalculate, MdChevronRight, MdPayment, MdRemove, MdSavings } from 'react-icons/md'
 import Cabecalho from '../components/Cabecalho/Cabecalho'
 import Saldo from '../components/Saldo/Saldo'
 import Extrato from '../components/Extrato/Extrato'
@@ -25,8 +25,8 @@ import { PASSOS_GERAL, PASSOS_SIMULACAO } from '../components/Tutorial/passos'
 import { limparErro } from '../store/extrato'
 import { limparErroCartoes } from '../store/cartoes'
 import supabase from '../services/supabase'
-import { buscarAtualizacao } from '../services/atualizacao'
-import { gravarNotificacoesLidas, lerNotificacoesLidas } from '../services/notificacoesLidas'
+import { buscarApkMaisRecente, buscarAtualizacao } from '../services/atualizacao'
+import { gravarAvisoAppVisto, gravarNotificacoesLidas, gravarTutorialPulado, lerNotificacoesLidas, lerTutorialPulado } from '../services/notificacoesLidas'
 import { gerarNotificacoes } from '../utils/notificacoes'
 import { calcularMeta } from '../utils/metas'
 import useHoje from '../hooks/useHoje'
@@ -39,7 +39,7 @@ const TITULOS = {
   dashboard: 'Dashboards',
   simulacao: 'Simulação',
   metas: 'Metas e reservas',
-  valores: 'Valores por pessoa',
+  valores: 'Acertos entre pessoas',
 }
 
 const TUTORIAIS = {
@@ -60,6 +60,8 @@ function Home({ saudacao, usuario }) {
   const [tutoriaisVistos, setTutoriaisVistos] = useState(() => usuario.user_metadata?.tutoriais ?? {})
   const [atualizacao, setAtualizacao] = useState(null)
   const [atualizacaoAdiada, setAtualizacaoAdiada] = useState(null)
+  const [apk, setApk] = useState(null)
+  const [tutorialPulado, setTutorialPulado] = useState(() => lerTutorialPulado(usuario.id))
   const [sobraPerguntada, setSobraPerguntada] = useState(() => usuario.user_metadata?.sobraPerguntada ?? '')
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const fechamento = useSelector((state) => state.extrato.fechamento)
@@ -92,6 +94,11 @@ function Home({ saudacao, usuario }) {
     }
   }, [])
 
+  // No navegador de um Android, oferece o APK em Minha conta. Sem versão publicada ou com falha, nada aparece.
+  useEffect(() => {
+    buscarApkMaisRecente().then(setApk).catch(() => {})
+  }, [])
+
   // "Agora não" adia a versão até o app ser aberto de novo; a obrigatória não pode ser adiada.
   const atualizacaoAberta = atualizacao && (atualizacao.obrigatoria || atualizacao.codigo_versao !== atualizacaoAdiada) ? atualizacao : null
   const adiarAtualizacao = useCallback(() => setAtualizacaoAdiada(atualizacao?.codigo_versao ?? null), [atualizacao])
@@ -113,13 +120,30 @@ function Home({ saudacao, usuario }) {
     supabase.auth.updateUser({ data: { tutoriais: vistos } })
   }, [tutoriaisVistos, tutorialAberto])
 
+  // Pular o tutorial geral num navegador Android deixa no sino o aviso de como baixar o app.
+  function pularTutorial() {
+    if (tutorialAberto === 'geral' && apk) {
+      gravarTutorialPulado(usuario.id)
+      setTutorialPulado(true)
+    }
+    fecharTutorial()
+  }
+
+  // O passo do app para Android só aparece no navegador do Android, quando há APK publicado.
+  const passosTutorial = tutorialAberto
+    ? TUTORIAIS[tutorialAberto].passos.filter((passo) => !passo.soAndroid || apk)
+    : []
+
   function abrirTutorial(chave) {
     setMinhaContaAberta(false)
     setTutorialEscolhido(chave)
   }
 
   const hoje = useHoje()
-  const notificacoes = gerarNotificacoes(contas, hoje)
+  const notificacoes = [
+    ...(apk && tutorialPulado ? [{ id: 'baixar-app', tipo: 'app' }] : []),
+    ...gerarNotificacoes(contas, hoje),
+  ]
   const notificacoesNovas = notificacoes.filter((notificacao) => !notificacoesLidas.includes(notificacao.id))
 
   // Abrir o sino marca tudo como lido; as que eram novas ficam destacadas enquanto a lista está aberta.
@@ -153,7 +177,7 @@ function Home({ saudacao, usuario }) {
     { rotulo: 'Receita', icone: <MdAdd size={24} />, acao: () => setNovaConta('Receita') },
     { rotulo: 'Despesa', icone: <MdRemove size={24} />, acao: () => setNovaConta('Despesa') },
     { rotulo: 'Metas', icone: <MdSavings size={24} />, acao: () => alterarAba('metas') },
-    { rotulo: 'Valores', icone: <MdPeopleAlt size={24} />, acao: () => alterarAba('valores') },
+    { rotulo: 'Cartões', icone: <MdPayment size={24} />, acao: () => alterarAba('cartoes') },
     { rotulo: 'Simular', icone: <MdCalculate size={24} />, acao: () => alterarAba('simulacao') },
   ]
 
@@ -260,19 +284,25 @@ function Home({ saudacao, usuario }) {
               fecharNotificacoes()
               alterarAba('parcelas')
             }}
+            onAbrirConta={() => {
+              gravarAvisoAppVisto(usuario.id)
+              setTutorialPulado(false)
+              fecharNotificacoes()
+              setMinhaContaAberta(true)
+            }}
           />
         </Modal>
       )}
 
       {minhaContaAberta && (
         <Modal titulo='Minha conta' onFechar={fecharMinhaConta}>
-          <MinhaConta usuario={usuario} onAbrirTutorial={abrirTutorial} />
+          <MinhaConta usuario={usuario} urlApk={apk?.url_apk} onAbrirTutorial={abrirTutorial} />
         </Modal>
       )}
 
       {tutorialAberto && (
         <Modal titulo={TUTORIAIS[tutorialAberto].titulo} onFechar={fecharTutorial}>
-          <Tutorial key={tutorialAberto} passos={TUTORIAIS[tutorialAberto].passos} onConcluir={fecharTutorial} />
+          <Tutorial key={tutorialAberto} passos={passosTutorial} onConcluir={fecharTutorial} onPular={pularTutorial} />
         </Modal>
       )}
 
