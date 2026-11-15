@@ -54,6 +54,78 @@
     box-shadow: var(--sombra-elevada);
 }
 
+.navegacao-fab {
+    z-index: 61;
+}
+
+.navegacao-menu-fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: var(--cor-overlay);
+}
+
+.navegacao-menu {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    width: min(300px, calc(100vw - 2rem));
+    padding: .375rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    background: var(--cor-superficie);
+    box-shadow: var(--sombra-elevada);
+}
+
+.navegacao-menu-flutuante {
+    position: fixed;
+    right: 1.25rem;
+    bottom: calc(var(--altura-nav) + env(safe-area-inset-bottom) + 1rem + 56px + .75rem);
+    z-index: 60;
+}
+
+.navegacao-menu-lateral {
+    display: none;
+}
+
+.navegacao-menu-opcao {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+}
+
+.navegacao-menu-opcao:hover,
+.navegacao-menu-opcao:focus-visible {
+    background: var(--cor-superficie-2);
+}
+
+.navegacao-menu-opcao strong {
+    display: block;
+    font-size: .9375rem;
+}
+
+.navegacao-menu-opcao small {
+    color: var(--cor-texto-suave);
+    font-size: .75rem;
+}
+
+.navegacao-menu-icone {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--cor-primaria-suave);
+    color: var(--cor-primaria);
+}
+
 @media screen and (min-width: 960px) {
     .navegacao {
         position: sticky;
@@ -92,8 +164,29 @@
     }
 
     .navegacao-nova {
-        display: flex;
+        position: relative;
+        display: block;
         margin-bottom: 1rem;
+    }
+
+    .navegacao-menu-lateral {
+        position: absolute;
+        top: calc(100% + .5rem);
+        left: 0;
+        z-index: 60;
+        display: flex;
+        width: 100%;
+        min-width: 260px;
+    }
+
+    /* Abaixo da barra lateral (z-index 50), para não cobrir o menu que fica dentro dela. */
+    .navegacao-menu-fundo {
+        z-index: 49;
+        background: transparent;
+    }
+
+    .navegacao-menu-flutuante {
+        display: none;
     }
 
     .navegacao-item,

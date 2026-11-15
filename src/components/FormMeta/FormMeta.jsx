@@ -18,10 +18,12 @@ const DURACAO_MAXIMA = 600
 
 const paraTexto = (valor) => (valor === null || valor === undefined ? '' : String(valor).replace('.', ','))
 
-function FormMeta({ meta, mesAtual, sugestaoReserva, onConcluir }) {
-  const [tipo, setTipo] = useState(meta?.tipo ?? 'meta')
-  const [nome, setNome] = useState(meta?.nome ?? '')
-  const [valorAlvo, setValorAlvo] = useState(paraTexto(meta?.valorAlvo))
+// Com `sugestao` (vinda do Marcão), cria uma nova meta já preenchida; com `meta`, edita a existente.
+function FormMeta({ meta, sugestao, mesAtual, sugestaoReserva, onConcluir }) {
+  const inicial = meta ?? sugestao
+  const [tipo, setTipo] = useState(inicial?.tipo ?? 'meta')
+  const [nome, setNome] = useState(inicial?.nome ?? '')
+  const [valorAlvo, setValorAlvo] = useState(paraTexto(inicial?.valorAlvo))
   const [prazo, setPrazo] = useState(meta?.prazo ? meta.prazo.slice(0, 7) : '')
   const [valorInicial, setValorInicial] = useState(paraTexto(meta?.valorInicial))
   const [incremento, setIncremento] = useState(paraTexto(meta?.incremento))

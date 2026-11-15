@@ -152,7 +152,7 @@ function Comparacao({ simulacoes, ocultar }) {
     simulacao,
     ...simularEntrada({ contas, fechamento, mesAtual, entrada: simulacao.entrada, formatar })
   }))
-  const atual = cenarioAtual(contas)
+  const atual = cenarioAtual(contas, mesAtual)
   const melhor = escolherMelhorCenario(cenarios)
 
   const linhas = [

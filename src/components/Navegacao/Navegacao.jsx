@@ -1,4 +1,5 @@
-import { MdAdd, MdCalculate, MdCreditCard, MdHome, MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSavings } from 'react-icons/md'
+import { useEffect, useState } from 'react'
+import { MdAdd, MdAutoAwesome, MdCalculate, MdClose, MdEditNote, MdCreditCard, MdHome, MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSavings } from 'react-icons/md'
 import './Navegacao.css'
 
 const ABAS = [
@@ -13,7 +14,44 @@ const ABAS = [
   { valor: 'simulacao', rotulo: 'Simulação', icone: <MdCalculate size={24} />, soDesktop: true },
 ]
 
-function Navegacao({ aba, onAlterarAba, onNovaConta, onAbrirConta }) {
+// O "+" pergunta como registrar: pelo formulário ou conversando com o Marcão (Copiloto).
+function MenuNovaConta({ className, onEscolher }) {
+  return (
+    <div className={`navegacao-menu ${className}`} role='menu' aria-label='Nova movimentação'>
+      <button role='menuitem' className='navegacao-menu-opcao' onClick={() => onEscolher('manual')}>
+        <span className='navegacao-menu-icone'><MdEditNote size={22} /></span>
+        <span>
+          <strong>Registrar manualmente</strong>
+          <small>Preencher o formulário</small>
+        </span>
+      </button>
+      <button role='menuitem' className='navegacao-menu-opcao' onClick={() => onEscolher('texto')}>
+        <span className='navegacao-menu-icone'><MdAutoAwesome size={20} /></span>
+        <span>
+          <strong>Falar com o Marcão</strong>
+          <small>Escreva e ele registra pra você</small>
+        </span>
+      </button>
+    </div>
+  )
+}
+
+function Navegacao({ aba, onAlterarAba, onNovaConta, onRegistrarPorTexto, onAbrirConta }) {
+  const [menuAberto, setMenuAberto] = useState(false)
+
+  useEffect(() => {
+    if (!menuAberto) return
+    const handleTecla = (event) => event.key === 'Escape' && setMenuAberto(false)
+    window.addEventListener('keydown', handleTecla)
+    return () => window.removeEventListener('keydown', handleTecla)
+  }, [menuAberto])
+
+  function escolher(opcao) {
+    setMenuAberto(false)
+    if (opcao === 'texto') onRegistrarPorTexto()
+    else onNovaConta('Receita')
+  }
+
   return (
     <>
       <nav className='navegacao' aria-label='Navegação principal'>
@@ -22,10 +60,18 @@ function Navegacao({ aba, onAlterarAba, onNovaConta, onAbrirConta }) {
           <strong>Controla+</strong>
         </button>
 
-        <button className='botao botao-primario navegacao-nova' onClick={() => onNovaConta('Receita')}>
-          <MdAdd size={20} />
-          Nova movimentação
-        </button>
+        <div className='navegacao-nova'>
+          <button
+            className='botao botao-primario'
+            onClick={() => setMenuAberto(!menuAberto)}
+            aria-haspopup='menu'
+            aria-expanded={menuAberto}
+          >
+            <MdAdd size={20} />
+            Nova movimentação
+          </button>
+          {menuAberto && <MenuNovaConta className='navegacao-menu-lateral' onEscolher={escolher} />}
+        </div>
 
         {ABAS.map(({ valor, rotulo, icone, soDesktop }) => (
           <button
@@ -40,8 +86,21 @@ function Navegacao({ aba, onAlterarAba, onNovaConta, onAbrirConta }) {
         ))}
       </nav>
 
-      <button className='navegacao-fab' onClick={() => onNovaConta('Receita')} aria-label='Nova movimentação'>
-        <MdAdd size={28} />
+      {menuAberto && (
+        <>
+          <div className='navegacao-menu-fundo' onClick={() => setMenuAberto(false)} aria-hidden='true' />
+          <MenuNovaConta className='navegacao-menu-flutuante' onEscolher={escolher} />
+        </>
+      )}
+
+      <button
+        className='navegacao-fab'
+        onClick={() => setMenuAberto(!menuAberto)}
+        aria-label={menuAberto ? 'Fechar opções' : 'Nova movimentação'}
+        aria-haspopup='menu'
+        aria-expanded={menuAberto}
+      >
+        {menuAberto ? <MdClose size={28} /> : <MdAdd size={28} />}
       </button>
     </>
   )

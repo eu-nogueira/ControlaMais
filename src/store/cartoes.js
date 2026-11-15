@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import supabase from "../services/supabase";
 import { cartaoDeTerceiro, mesmoCartao } from "../utils/cartoes";
-import { mensagemErro } from '../services/erros'
+import { ehErroConexao, mensagemErro } from '../services/erros'
+import { chaveDoUsuario, gravarJSON, lerJSON } from '../services/armazenamentoLocal'
 
 function paraCartao(linha) {
     return {
@@ -29,13 +30,23 @@ function traduzirErro(error) {
     return error
 }
 
+// Uma cópia fica no aparelho para o app abrir sem internet (os cartões só podem ser alterados com conexão).
 export const carregarCartoes = createAsyncThunk('cartoes/carregarCartoes', async () => {
+    const { data: sessao } = await supabase.auth.getSession()
+    const chave = sessao.session && chaveDoUsuario('cartoes', sessao.session.user.id)
+
     const { data, error } = await supabase
         .from('cartoes')
         .select('*')
         .order('nome')
-    if (error) throw error
-    return data.map(paraCartao)
+    if (error) {
+        const copia = chave && ehErroConexao(error) ? await lerJSON(chave) : null
+        if (copia) return copia
+        throw error
+    }
+    const cartoes = data.map(paraCartao)
+    if (chave) await gravarJSON(chave, cartoes)
+    return cartoes
 })
 
 export const adicionarCartao = createAsyncThunk('cartoes/adicionarCartao', async (cartao) => {

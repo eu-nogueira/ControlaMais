@@ -5,8 +5,9 @@ import { adicionarConta, editarConta } from '../../store/extrato'
 import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { calcularUsoCartoes, encontrarCartao, mesmoCartao } from '../../utils/cartoes'
 import { TIPOS_DESPESA } from '../../utils/dashboard'
-import { formatarMes } from '../../utils/mes'
-import { mesesParaFechar } from '../../utils/saldo'
+import { nomesDasPessoas, unificarNome } from '../../utils/acertos'
+import { deslocarMes, formatarMes } from '../../utils/mes'
+import { mesSaldoPeloVencimento, mesesParaFechar } from '../../utils/saldo'
 import useMesAtual from '../../hooks/useMesAtual'
 import './FormConta.css'
 
@@ -29,22 +30,24 @@ function origemSaldoInicial(conta) {
 }
 
 // Com `conta`, o formulário edita a movimentação existente em vez de criar uma nova.
-function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
-  const [descricao, setDescricao] = useState(conta?.descricao ?? '')
-  const [valor, setValor] = useState(conta ? String(conta.valorFormatado).replace('.', ',') : '')
-  const [tipoConta, setTipoConta] = useState(conta?.tipoConta ?? tipoInicial)
-  const [parcela, setParcela] = useState(conta?.parcela ? String(conta.parcela) : '1')
-  const [responsavel, setResponsavel] = useState(conta?.responsavel ?? '')
-  const [dataVencimento, setDataVencimento] = useState(conta?.dataVencimento ?? '')
-  const [cadastroData, setCadastroData] = useState(conta?.dataCadastro ?? hojeISO)
-  const [selected, setSelected] = useState(conta?.selected ?? true)
-  const [anotarPara, setAnotarPara] = useState(conta?.anotarPara ?? '')
-  const [ehCartao, setEhCartao] = useState(Boolean(conta?.cartao))
-  const [cartao, setCartao] = useState(conta?.cartao ?? '')
-  const [contaFixa, setContaFixa] = useState(conta?.contaFixa ?? false)
+// Com `sugestao` (vinda do Copiloto), cria uma nova já preenchida com os campos interpretados.
+function FormConta({ tipoInicial = 'Receita', conta, sugestao, onConcluir }) {
+  const inicial = conta ?? sugestao
+  const [descricao, setDescricao] = useState(inicial?.descricao ?? '')
+  const [valor, setValor] = useState(inicial?.valorFormatado ? String(inicial.valorFormatado).replace('.', ',') : '')
+  const [tipoConta, setTipoConta] = useState(inicial?.tipoConta ?? tipoInicial)
+  const [parcela, setParcela] = useState(inicial?.parcela ? String(inicial.parcela) : '1')
+  const [responsavel, setResponsavel] = useState(inicial?.responsavel ?? '')
+  const [dataVencimento, setDataVencimento] = useState(inicial?.dataVencimento ?? '')
+  const [cadastroData, setCadastroData] = useState(inicial?.dataCadastro ?? hojeISO)
+  const [selected, setSelected] = useState(inicial?.selected ?? true)
+  const [anotarPara, setAnotarPara] = useState(inicial?.anotarPara ?? '')
+  const [ehCartao, setEhCartao] = useState(Boolean(inicial?.cartao || inicial?.ehCartao))
+  const [cartao, setCartao] = useState(inicial?.cartao ?? '')
+  const [contaFixa, setContaFixa] = useState(inicial?.contaFixa ?? false)
   // '' segue o vencimento; 'atual' desconta do saldo do mês passado; 'proximo', do próximo salário.
   const [origemSaldo, setOrigemSaldo] = useState(() => origemSaldoInicial(conta))
-  const categoriaInicial = conta?.categoria ?? ''
+  const categoriaInicial = inicial?.categoria ?? ''
   const tipoConhecido = TIPOS_DESPESA.includes(categoriaInicial)
   const [tipoDespesa, setTipoDespesa] = useState(tipoConhecido ? categoriaInicial : categoriaInicial ? 'Outros' : '')
   const [outroTipo, setOutroTipo] = useState(tipoConhecido ? '' : categoriaInicial)
@@ -65,11 +68,15 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   const cartaoDeTerceiro = despesa && selected && Boolean(anotarPara.trim())
   const cartaoEscolhido = cartaoDeTerceiro ? undefined : encontrarCartao(calcularUsoCartoes(cartoesCadastrados, outrasContas, fechamento), cartao)
 
+  // Vencimento a partir de dois meses à frente: sai do saldo do mês anterior ao vencimento
+  // (vence 05/01 → saldo de dezembro), que ainda está por vir.
+  const mesFuturo = despesa ? mesSaldoPeloVencimento(dataVencimento, mesAtual, cadastroData || hojeISO()) : ''
+
   // Despesa do mês atual com o mês passado ainda não quitado: o vencimento decide de qual saldo ela sai.
   // Vencendo até o mês atual, sai do saldo exibido; depois disso, fica para o próximo salário.
   const mesesAbertos = mesesParaFechar(outrasContas, fechamento, mesAtual)
   const mesPassado = mesesAbertos[mesesAbertos.length - 1]
-  const decidirPeloVencimento = despesa && selected && Boolean(mesPassado) && (cadastroData || hojeISO()).slice(0, 7) === mesAtual
+  const decidirPeloVencimento = despesa && selected && !mesFuturo && Boolean(mesPassado) && (cadastroData || hojeISO()).slice(0, 7) === mesAtual
   const descontaPeloVencimento = Boolean(dataVencimento) && dataVencimento.slice(0, 7) <= mesAtual
   // A escolha do usuário (saldo atual ou próximo salário) tem prioridade sobre o vencimento.
   const descontaDoSaldoAtual = origemSaldo ? origemSaldo === 'atual' : descontaPeloVencimento
@@ -148,9 +155,11 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
   }
 
   function mesSaldoEscolhido() {
+    if (mesFuturo) return mesFuturo
     if (decidirPeloVencimento) return descontaDoSaldoAtual ? mesPassado : mesAtual
-    // Depois de quitado o mês passado, a despesa segue no saldo em que foi descontada.
-    return despesa && selected && conta?.mesSaldo ? conta.mesSaldo : ''
+    // Depois de quitado o mês passado, a despesa segue no saldo em que foi descontada. Um mês futuro
+    // vindo de um vencimento que foi alterado não vale mais.
+    return despesa && selected && conta?.mesSaldo && conta.mesSaldo <= mesAtual ? conta.mesSaldo : ''
   }
 
   function avisoOrigemSaldo() {
@@ -168,23 +177,25 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
 
     setSalvando(true)
     try {
-      await dispatch((conta ? editarConta : adicionarConta)({
+      const salva = await dispatch((conta ? editarConta : adicionarConta)({
         ...(conta && { id: conta.id }),
         descricao: descricao.trim(),
         dataCadastro: cadastroData || hojeISO(),
         valorFormatado,
         tipoConta,
-        responsavel: despesa ? responsavel.trim() : '',
+        // A mesma pessoa escrita de outro jeito ("nagano store") usa a grafia já cadastrada,
+        // para não aparecer como outra pessoa nos acertos.
+        responsavel: despesa ? unificarNome(responsavel, outrasContas) : '',
         parcela: despesa && !contaFixa ? parcela : '',
         contaFixa: despesa && contaFixa,
         dataVencimento: despesa ? dataVencimento : '',
         selected: despesa && selected,
-        anotarPara: despesa && selected ? anotarPara.trim() : '',
+        anotarPara: despesa && selected ? unificarNome(anotarPara, outrasContas) : '',
         cartao: despesa && ehCartao ? (cartaoEscolhido?.nome ?? cartao.trim()) : '',
         categoria: !despesa ? '' : tipoDespesa === 'Outros' ? outroTipo.trim() || 'Outros' : tipoDespesa,
         mesSaldo: mesSaldoEscolhido()
       })).unwrap()
-      onConcluir()
+      onConcluir(salva)
     } catch {
       setSalvando(false)
     }
@@ -301,6 +312,14 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
               </label>
             </div>
 
+            {mesFuturo && (
+              <p className='form-resumo' aria-live='polite'>
+                {selected
+                  ? `Vence em ${nomeMes(deslocarMes(mesFuturo, 1))}: sai do saldo de ${nomeMes(mesFuturo)}, e não do saldo atual.`
+                  : `Vence em ${nomeMes(deslocarMes(mesFuturo, 1))}: entra nos acertos de ${nomeMes(mesFuturo)}.`}
+              </p>
+            )}
+
             {decidirPeloVencimento && (
               <div className='form-campo'>
                 <span id='rotulo-origem-saldo'>De onde descontar?</span>
@@ -358,13 +377,13 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
             {selected ? (
               <label className='form-campo'>
                 <span>Vai pagar alguém por essa compra? <em>(opcional)</em></span>
-                <input type='text' placeholder='Ex.: Ana' value={anotarPara} onChange={(e) => setAnotarPara(e.target.value)} />
+                <input type='text' placeholder='Ex.: Ana' value={anotarPara} onChange={(e) => setAnotarPara(e.target.value)} list='form-pessoas' autoComplete='off' />
                 <small>Use quando a compra foi feita no cartão ou no nome de outra pessoa.</small>
               </label>
             ) : (
               <label className='form-campo'>
                 <span>Quem vai te pagar?</span>
-                <input type='text' placeholder='Ex.: João' value={responsavel} onChange={(e) => setResponsavel(e.target.value)} />
+                <input type='text' placeholder='Ex.: João' value={responsavel} onChange={(e) => setResponsavel(e.target.value)} list='form-pessoas' autoComplete='off' />
               </label>
             )}
 
@@ -400,6 +419,11 @@ function FormConta({ tipoInicial = 'Receita', conta, onConcluir }) {
           </fieldset>
         </>
       )}
+
+      {/* Sugere os nomes já usados nos acertos enquanto a pessoa é digitada. */}
+      <datalist id='form-pessoas'>
+        {nomesDasPessoas(outrasContas).map((nome) => <option key={nome} value={nome} />)}
+      </datalist>
 
       <label className='form-campo'>
         <span>Data da movimentação</span>

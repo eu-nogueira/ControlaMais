@@ -3,11 +3,12 @@
 // Nos dois casos o valor é tratado como `emprestimo`; o valor a receber tem `futuro: true`, sem parcelas nem custo.
 // Só o empréstimo recebe análise (veredito); o valor a receber mostra apenas os números e combinações de uso,
 // incluindo compras simuladas pagas à vista com o próprio valor, que nunca viram movimentações reais.
-import { calcularPeriodo } from './saldo'
+import { calcularPeriodo, mesDoSaldo } from './saldo'
 import { deslocarMes, formatarMes, mesesEntre } from './mes'
 import { ehContaFixa, ehParcelado, parcelasRestantes } from './parcelas'
 import { juntarLista, lerValor } from './formatar'
 import { calcularFerias } from './ferias'
+import { calcularDecimoTerceiro } from './decimoTerceiro'
 
 export const MESES_ANALISE = 12
 // O empréstimo só compensa se liberar, por mês, ao menos este percentual das parcelas atuais.
@@ -101,8 +102,9 @@ export function descreverRecurso(recurso, formatar) {
 
 // Dívidas simuláveis: parcelamentos e contas fixas que o usuário paga e que ainda têm
 // cobranças futuras (Infinity para conta fixa). A parcela do mês atual já está
-// descontada do saldo disponível, por isso não entra.
-export function listarDividas(contas) {
+// descontada do saldo disponível, por isso não entra — exceto quando o parcelamento só começa
+// num mês futuro (vencimento distante): aí nenhuma parcela saiu ainda e todas são futuras.
+export function listarDividas(contas, mesAtual) {
   return contas
     .filter((conta) => conta.tipoConta === 'Despesa' && conta.selected && ehParcelado(conta))
     .map((conta) => ({
@@ -111,18 +113,28 @@ export function listarDividas(contas) {
       cartao: conta.cartao,
       fixa: ehContaFixa(conta),
       valorParcela: conta.valorFormatado,
-      futuras: parcelasRestantes(conta) - 1
+      futuras: parcelasRestantes(conta) - (mesAtual && mesDoSaldo(conta) > mesAtual ? 0 : 1)
     }))
     .filter((divida) => divida.futuras > 0)
 }
 
 // Sugestão de renda: média das receitas dos últimos 3 meses anteriores ao atual que tiveram receita.
+// O mês atual fica de fora porque pode estar incompleto; ele só é usado quando ainda não há receita em
+// meses anteriores (ex.: quem acabou de começar e registrou o primeiro salário), com `doMesAtual: true`.
 export function estimarRenda(contas, mesAtual) {
   const receitas = contas.filter((conta) => conta.tipoConta === 'Receita')
-  const meses = [...new Set(receitas.map(mesDa))].filter((mes) => mes < mesAtual).sort().slice(-3)
-  if (meses.length === 0) return { renda: null, meses }
+  const comReceita = [...new Set(receitas.map(mesDa))]
+  const anteriores = comReceita.filter((mes) => mes < mesAtual).sort().slice(-3)
+  const meses = anteriores.length > 0 ? anteriores : comReceita.filter((mes) => mes === mesAtual)
+  if (meses.length === 0) return { renda: null, meses, doMesAtual: false }
   const doPeriodo = receitas.filter((conta) => meses.includes(mesDa(conta)))
-  return { renda: arredondar(somar(doPeriodo, 'valorFormatado') / meses.length), meses }
+  return { renda: arredondar(somar(doPeriodo, 'valorFormatado') / meses.length), meses, doMesAtual: anteriores.length === 0 }
+}
+
+// De onde veio a renda estimada, para explicar na tela.
+export function descreverOrigemRenda({ meses, doMesAtual }) {
+  if (doMesAtual) return 'receitas deste mês, porque ainda não há receitas em meses anteriores'
+  return `média de receitas de ${meses.length === 1 ? '1 mês anterior' : `${meses.length} meses anteriores`}`
 }
 
 // Antecipar paga as próximas parcelas: nesses meses ela não é cobrada e depois volta.
@@ -194,10 +206,11 @@ const totalCompras = (compras) => arredondar(somar(compras, 'valor'))
 // fixas de cada mês, sem nenhuma decisão aplicada. Usa as mesmas regras da projeção da simulação:
 // cada parcelamento deixa de ser cobrado depois da última parcela.
 export function projetarDisponivel(contas, mesAtual, meses) {
-  const { renda, meses: mesesRenda } = estimarRenda(contas, mesAtual)
-  if (renda === null) return { renda, mesesRenda, pontos: [] }
+  const estimativa = estimarRenda(contas, mesAtual)
+  const { renda, meses: mesesRenda } = estimativa
+  if (renda === null) return { renda, mesesRenda, estimativa, pontos: [] }
 
-  const dividas = listarDividas(contas)
+  const dividas = listarDividas(contas, mesAtual)
   const projecao = projetar({ mesAtual, renda, saldoInicial: 0, operacoes: dividas.map((divida) => aplicarDecisao(divida)), emprestimo: null, meses })
   const pontos = projecao.map(({ mes, compromissos }, indice) => ({
     mes,
@@ -207,7 +220,7 @@ export function projetarDisponivel(contas, mesAtual, meses) {
     // Parcelamentos cuja última parcela foi no mês anterior: deixam de pesar a partir deste.
     encerrados: dividas.filter((divida) => !divida.fixa && divida.futuras === indice)
   }))
-  return { renda, mesesRenda, pontos }
+  return { renda, mesesRenda, estimativa, pontos }
 }
 
 const menorSaldo = (projecao) => projecao.reduce((menor, item) => (item.saldo < menor.saldo ? item : menor), projecao[0])
@@ -249,7 +262,7 @@ function resumirOperacoes(operacoes, emprestimo) {
 
 // Compara o cenário atual (nada muda) com o simulado nos próximos MESES_ANALISE meses.
 export function simular({ contas, fechamento, mesAtual, emprestimo, renda, decisoes, descontos, compras = [], formatar }) {
-  const dividas = listarDividas(contas)
+  const dividas = listarDividas(contas, mesAtual)
   const saldoAtual = calcularPeriodo(contas, fechamento).saldo
   const inicio = emprestimo.valido ? emprestimo.inicio : 0
   const operacoes = dividas.map((divida) => aplicarDecisao(divida, decisoes[divida.id], descontos[divida.id], inicio))
@@ -413,7 +426,7 @@ const descreverOperacao = (operacao) => (operacao.acao === 'quitar'
 export function recomendarCombinacoes({ contas, fechamento, mesAtual, emprestimo, renda, descontos, compras = [], limite = 3 }) {
   if (!emprestimo.valido) return []
 
-  const dividas = listarDividas(contas)
+  const dividas = listarDividas(contas, mesAtual)
   const saldoAtual = calcularPeriodo(contas, fechamento).saldo
   const { inicio } = emprestimo
   const disponivel = arredondar(emprestimo.valor - totalCompras(compras))
@@ -479,7 +492,10 @@ export function recomendarCombinacoes({ contas, fechamento, mesAtual, emprestimo
 // o valor simulado é só a parte livre (sem o salário adiantado).
 export function simularEntrada({ contas, fechamento, mesAtual, entrada, formatar }) {
   const ferias = entrada.tipo === 'futuro' && entrada.origem === 'ferias' && entrada.modoFerias === 'calcular' ? calcularFerias(entrada) : null
-  const valorRecebido = ferias ? (ferias.valido ? ferias.livre : 0) : lerValor(entrada.valor || '')
+  // 13º calculado pelo app: entra o líquido (ou só a 2ª parcela, se a 1ª já foi recebida).
+  const decimo = entrada.tipo === 'futuro' && entrada.origem === 'decimo_terceiro' && entrada.modoDecimo === 'calcular' ? calcularDecimoTerceiro(entrada) : null
+  const calculado = ferias ?? decimo
+  const valorRecebido = calculado ? (calculado.valido ? (ferias ? ferias.livre : decimo.aReceber) : 0) : lerValor(entrada.valor || '')
   const emprestimo = entrada.tipo === 'futuro'
     ? calcularValorFuturo({ valor: valorRecebido, origem: entrada.origem, descricao: entrada.descricaoOrigem, mes: entrada.mesRecebimento, mesAtual })
     : calcularEmprestimo({ valor: lerValor(entrada.valor || ''), parcelas: Number(entrada.parcelas), valorParcela: lerValor(entrada.valorParcela || '') })
@@ -494,7 +510,7 @@ export function simularEntrada({ contas, fechamento, mesAtual, entrada, formatar
     .filter(([id, decisao]) => decisao?.acao && decisao.acao !== 'manter' && !ids.has(id))
     .map(([id]) => entrada.nomesDividas?.[id] || 'Dívida removida')
 
-  return { emprestimo, ferias, compras, resultado, combinacoes: recomendarCombinacoes(base), dividasAusentes }
+  return { emprestimo, ferias, decimo, compras, resultado, combinacoes: recomendarCombinacoes(base), dividasAusentes }
 }
 
 export const descreverCombinacao = (combinacao) => (combinacao.descricoes.length > 0 ? juntarLista(combinacao.descricoes) : 'Não usar em dívidas')
@@ -529,8 +545,8 @@ export function resumoParaSalvar({ emprestimo, compras, resultado, combinacoes }
 }
 
 // Cenário "não contratar": tudo continua como está hoje.
-export function cenarioAtual(contas) {
-  const dividas = listarDividas(contas)
+export function cenarioAtual(contas, mesAtual) {
+  const dividas = listarDividas(contas, mesAtual)
   return {
     parcelasMes: arredondar(somar(dividas, 'valorParcela')),
     totalAberto: arredondar(dividas.filter((divida) => !divida.fixa).reduce((total, divida) => total + divida.futuras * divida.valorParcela, 0))

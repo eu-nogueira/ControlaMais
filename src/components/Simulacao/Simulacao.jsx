@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { MdAdd, MdArrowForward, MdCheck, MdDeleteOutline, MdCheckCircle, MdHelpOutline, MdInfoOutline, MdRemove, MdRemoveCircleOutline, MdShield, MdWarningAmber } from 'react-icons/md'
 import { formatarMoeda, juntarLista, lerValor } from '../../utils/formatar'
 import { deslocarMes, formatarMes } from '../../utils/mes'
-import { LIMITE_META_REDUZIDA, MESES_ANALISE, META_LIBERACAO, META_LIBERACAO_REDUZIDA, ORIGENS_VALOR_FUTURO, chaveEscolhas, descreverCombinacao, descreverRecurso, estimarRenda, resumoParaSalvar, simularEntrada } from '../../utils/simulacao'
+import { LIMITE_META_REDUZIDA, MESES_ANALISE, META_LIBERACAO, META_LIBERACAO_REDUZIDA, ORIGENS_VALOR_FUTURO, chaveEscolhas, descreverCombinacao, descreverOrigemRenda, descreverRecurso, estimarRenda, resumoParaSalvar, simularEntrada } from '../../utils/simulacao'
 import { carregarSimulacoes, salvarSimulacao } from '../../store/simulacoes'
 import SimulacoesSalvas from '../SimulacoesSalvas/SimulacoesSalvas'
 import useMesAtual from '../../hooks/useMesAtual'
@@ -34,9 +34,9 @@ const paraCampo = (valor) => (valor == null ? '' : valor.toFixed(2).replace('.',
 const formatarPercentual = (fracao) => `${(fracao * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`
 const nomeMes = (mes) => formatarMes(mes).toLowerCase()
 
-function origemEstimativa(meses) {
-  if (meses.length === 0) return 'Sem receitas registradas em meses anteriores: informe o valor.'
-  return `Sugestão: média de receitas de ${meses.length === 1 ? '1 mês anterior' : `${meses.length} meses anteriores`} (estimativa, pode alterar).`
+function origemEstimativa(estimativa) {
+  if (estimativa.meses.length === 0) return 'Sem receitas registradas: informe o valor.'
+  return `Sugestão: ${descreverOrigemRenda(estimativa)} (estimativa, pode alterar).`
 }
 
 function ItemDivida({ operacao, decisao, desconto, mesAtual, futuro, ocultar, onDecidir, onDesconto }) {
@@ -125,6 +125,33 @@ function ItemDivida({ operacao, decisao, desconto, mesAtual, futuro, ocultar, on
 }
 
 // Estimativa de quanto das férias é livre para gastar. Sempre aproximada.
+function ResultadoDecimo({ decimo, ocultar }) {
+  const formatar = (numero) => formatarMoeda(numero, ocultar)
+
+  return (
+    <div className='simulacao-ferias' role='status'>
+      <h3>{decimo.primeiraRecebida ? 'Quanto do 13º ainda vai entrar' : 'Seu 13º líquido'}</h3>
+      <p className='simulacao-ferias-valor'>
+        <small>Aproximadamente</small>
+        <strong>{formatar(decimo.aReceber)}</strong>
+      </p>
+
+      <dl className='simulacao-ferias-composicao'>
+        <div><dt>13º bruto{decimo.meses < 12 ? ` (${decimo.meses} de 12 meses)` : ''}</dt><dd>{formatar(decimo.bruto)}</dd></div>
+        <div><dt>1ª parcela (até 30/11, sem descontos)</dt><dd>{decimo.primeiraRecebida ? 'já recebida' : `+ ${formatar(decimo.primeira)}`}</dd></div>
+        <div><dt>2ª parcela (até 20/12)</dt><dd>+ {formatar(decimo.bruto - decimo.primeira)}</dd></div>
+        <div><dt>INSS, descontado na 2ª parcela</dt><dd>− {formatar(decimo.inss)}</dd></div>
+      </dl>
+
+      <ul className='simulacao-ferias-notas'>
+        {decimo.desconsiderados.length > 0 && <li>Este valor não considera {juntarLista(decimo.desconsiderados)}, que não foi preenchida ou está zerada.</li>}
+        {decimo.podeTerIr && <li>Pode haver desconto de Imposto de Renda, que não está incluído: o valor líquido pode ser menor.</li>}
+        <li>É uma estimativa com a tabela do INSS de {ANO_TABELA_INSS}. O valor exato depende da folha de pagamento da sua empresa.</li>
+      </ul>
+    </div>
+  )
+}
+
 function ResultadoFerias({ ferias, ocultar }) {
   const formatar = (numero) => formatarMoeda(numero, ocultar)
   const vendeu = ferias.vendidos > 0
@@ -288,6 +315,10 @@ function EditorSimulacao({ rascunho, ocultar, onSalvo, onNova }) {
   const [descricaoOrigem, setDescricaoOrigem] = useState(inicial?.descricaoOrigem ?? '')
   const [mesRecebimento, setMesRecebimento] = useState(inicial?.mesRecebimento ?? '')
   const [modoFerias, setModoFerias] = useState(inicial?.modoFerias ?? 'calcular')
+  // 13º: simulações salvas antes do cálculo tinham o valor digitado, então seguem em "Informar o valor".
+  const [modoDecimo, setModoDecimo] = useState(inicial ? inicial.modoDecimo ?? 'manual' : 'calcular')
+  const [mesesTrabalhados, setMesesTrabalhados] = useState(inicial?.mesesTrabalhados ?? '12')
+  const [primeiraRecebida, setPrimeiraRecebida] = useState(inicial?.primeiraRecebida ?? false)
   const [salarioBruto, setSalarioBruto] = useState(inicial?.salarioBruto ?? '')
   const [diasFerias, setDiasFerias] = useState(inicial?.diasFerias ?? '30')
   const [diasVendidos, setDiasVendidos] = useState(inicial?.diasVendidos ?? '')
@@ -307,13 +338,15 @@ function EditorSimulacao({ rascunho, ocultar, onSalvo, onNova }) {
 
   const formatar = (numero) => formatarMoeda(numero, ocultar)
   const entradaSalva = tipo === 'futuro'
-    ? { tipo, origem, descricaoOrigem, mesRecebimento, valor, modoFerias, salarioBruto, diasFerias, diasVendidos, mediaAdicionais, compras, renda, decisoes, descontos }
+    ? { tipo, origem, descricaoOrigem, mesRecebimento, valor, modoFerias, modoDecimo, salarioBruto, diasFerias, diasVendidos, mediaAdicionais, mesesTrabalhados, primeiraRecebida, compras, renda, decisoes, descontos }
     : { tipo, valor, parcelas, valorParcela, renda, decisoes, descontos }
-  const { emprestimo, ferias, compras: comprasValidas, resultado, combinacoes, dividasAusentes } = simularEntrada({ contas, fechamento, mesAtual, entrada: entradaSalva, formatar })
+  const { emprestimo, ferias, decimo, compras: comprasValidas, resultado, combinacoes, dividasAusentes } = simularEntrada({ contas, fechamento, mesAtual, entrada: entradaSalva, formatar })
 
   const { resumo } = resultado
   const futuro = tipo === 'futuro'
   const feriasCalculadas = futuro && origem === 'ferias' && modoFerias === 'calcular'
+  const decimoCalculado = futuro && origem === 'decimo_terceiro' && modoDecimo === 'calcular'
+  const valorCalculado = feriasCalculadas || decimoCalculado
   const ultimoMes = deslocarMes(mesAtual, MESES_ANALISE - 1)
   const veredito = emprestimo.valido ? VEREDITOS[resultado.veredito] : null
   const analisavel = emprestimo.valido && resultado.restante >= 0
@@ -398,14 +431,14 @@ function EditorSimulacao({ rascunho, ocultar, onSalvo, onNova }) {
 
         {futuro ? (
           <>
-            <div className={feriasCalculadas ? 'simulacao-linha-dois' : 'simulacao-linha-tres'}>
+            <div className={valorCalculado ? 'simulacao-linha-dois' : 'simulacao-linha-tres'}>
               <label className='simulacao-campo'>
                 <span>Origem</span>
                 <select value={origem} onChange={(e) => setOrigem(e.target.value)}>
                   {ORIGENS_VALOR_FUTURO.map((item) => <option key={item.valor} value={item.valor}>{item.rotulo}</option>)}
                 </select>
               </label>
-              {!feriasCalculadas && (
+              {!valorCalculado && (
                 <label className='simulacao-campo'>
                   <span>Valor a receber</span>
                   <input type='text' inputMode='decimal' placeholder='R$ 0,00' value={valor} onChange={(e) => setValor(e.target.value)} />
@@ -466,6 +499,53 @@ function EditorSimulacao({ rascunho, ocultar, onSalvo, onNova }) {
                 )}
               </>
             )}
+            {origem === 'decimo_terceiro' && (
+              <>
+                <div className='simulacao-segmento' role='radiogroup' aria-label='Como informar o valor do 13º'>
+                  {MODOS_FERIAS.map((item) => (
+                    <button
+                      key={item.valor}
+                      type='button'
+                      role='radio'
+                      aria-checked={modoDecimo === item.valor}
+                      className={modoDecimo === item.valor ? 'simulacao-segmento-ativo' : ''}
+                      onClick={() => setModoDecimo(item.valor)}
+                    >
+                      {item.rotulo}
+                    </button>
+                  ))}
+                </div>
+
+                {decimoCalculado ? (
+                  <>
+                    <div className='simulacao-linha-dois'>
+                      <label className='simulacao-campo'>
+                        <span>Salário bruto</span>
+                        <input type='text' inputMode='decimal' placeholder='R$ 0,00' value={salarioBruto} onChange={(e) => setSalarioBruto(e.target.value)} />
+                      </label>
+                      <label className='simulacao-campo'>
+                        <span>Meses trabalhados no ano</span>
+                        <input type='number' inputMode='numeric' min='1' max='12' value={mesesTrabalhados} onChange={(e) => setMesesTrabalhados(e.target.value)} />
+                        <small>12 se trabalhou o ano todo na empresa.</small>
+                      </label>
+                      <label className='simulacao-campo'>
+                        <span>Média de horas extras e adicionais <em>(opcional)</em></span>
+                        <input type='text' inputMode='decimal' placeholder='R$ 0,00' value={mediaAdicionais} onChange={(e) => setMediaAdicionais(e.target.value)} />
+                        <small>Média mensal do ano.</small>
+                      </label>
+                    </div>
+                    <label className='simulacao-check'>
+                      <input type='checkbox' checked={primeiraRecebida} onChange={(e) => setPrimeiraRecebida(e.target.checked)} />
+                      <span>Já recebi a 1ª parcela</span>
+                    </label>
+                    {decimo?.valido && <ResultadoDecimo decimo={decimo} ocultar={ocultar} />}
+                  </>
+                ) : (
+                  <p className='simulacao-dica'>Se não souber o valor líquido do seu 13º, use "Calcular para mim".</p>
+                )}
+              </>
+            )}
+
             {origem === 'outro' && (
               <label className='simulacao-campo'>
                 <span>Descrição <em>(opcional)</em></span>
@@ -526,7 +606,7 @@ function EditorSimulacao({ rascunho, ocultar, onSalvo, onNova }) {
         <label className='simulacao-campo'>
           <span>Renda mensal</span>
           <input type='text' inputMode='decimal' placeholder='R$ 0,00' value={renda} onChange={(e) => setRenda(e.target.value)} />
-          <small>{origemEstimativa(estimativa.meses)}</small>
+          <small>{origemEstimativa(estimativa)}</small>
         </label>
         <p className='simulacao-saldo'>
           Saldo disponível hoje: <strong className={resultado.saldoAtual < 0 ? 'valor-negativo' : ''}>{formatar(resultado.saldoAtual)}</strong>
@@ -776,9 +856,10 @@ function EditorSimulacao({ rascunho, ocultar, onSalvo, onNova }) {
 
 // Abas da Simulação: o editor e as simulações salvas. O editor fica montado (só oculto)
 // ao trocar de aba, para não perder o que foi preenchido.
-function Simulacao({ ocultar, onAbrirTutorial }) {
+// `pedido`: simulação sugerida pelo Marcão ({ nome, entrada }), aberta já preenchida.
+function Simulacao({ ocultar, onAbrirTutorial, pedido }) {
   const [aba, setAba] = useState('editor')
-  const [rascunho, setRascunho] = useState({ chave: 0, id: null, nome: '', entrada: null })
+  const [rascunho, setRascunho] = useState(() => ({ chave: 0, id: null, nome: pedido?.nome ?? '', entrada: pedido?.entrada ?? null }))
   const { lista, carregado } = useSelector((state) => state.simulacoes)
   const dispatch = useDispatch()
 

@@ -1,7 +1,7 @@
 import { deslocarMes, mesesEntre } from './mes'
 
 // Reserva de emergência recomendada: alguns meses das despesas do mês.
-export const MESES_RESERVA = 6
+export const MESES_RESERVA = 2
 
 const arredondar = (valor) => Math.round(valor * 100) / 100
 

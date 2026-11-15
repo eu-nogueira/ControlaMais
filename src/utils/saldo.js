@@ -1,9 +1,20 @@
 import { PRIMEIRO_MES, deslocarData, deslocarMes } from './mes'
 import { ehParcelado, parcelasRestantes } from './parcelas'
 
-// Mês cujo saldo a movimentação afeta: o da data de cadastro, salvo despesas do mês atual
-// registradas antes de quitar o mês passado, que guardam o mês escolhido (passado ou atual).
+// Mês cujo saldo a movimentação afeta: o da data de cadastro, salvo quando a despesa guarda outro mês:
+// o escolhido (passado ou atual) antes de quitar o mês passado, ou um mês futuro definido pelo vencimento.
 export const mesDoSaldo = (conta) => conta.mesSaldo || conta.dataCadastro.slice(0, 7)
+
+// A conta é paga com o salário do mês anterior ao vencimento (vence 05/01 → sai do saldo de dezembro).
+// Devolve esse mês quando ele é depois do mês atual e do mês do cadastro; senão, '' (vale a regra de sempre).
+export function mesSaldoPeloVencimento(dataVencimento, mesAtual, dataCadastro) {
+  if (!dataVencimento) return ''
+  const mes = deslocarMes(dataVencimento.slice(0, 7), -1)
+  return mes > mesAtual && mes > (dataCadastro || '').slice(0, 7) ? mes : ''
+}
+
+// Despesa marcada para o saldo de um mês futuro: só entra no saldo quando esse mês chegar.
+const ehDeMesFuturo = (conta, mesAtual) => Boolean(conta.mesSaldo) && conta.mesSaldo > mesAtual
 const mesDa = mesDoSaldo
 
 const somar = (contas) => contas.reduce((total, conta) => total + conta.valorFormatado, 0)
@@ -51,7 +62,8 @@ export function mesesParaFechar(contas, fechamento, mesAtual) {
 
 // Até as contas do mês passado serem quitadas, despesas marcadas para o próximo salário
 // ficam fora do saldo exibido. As demais movimentações seguem o período aberto normalmente.
-export function calcularSaldoExibido(contas, fechamento, mesAtual) {
+export function calcularSaldoExibido(contasTodas, fechamento, mesAtual) {
+  const contas = contasTodas.filter((conta) => !ehDeMesFuturo(conta, mesAtual))
   const abertos = mesesParaFechar(contas, fechamento, mesAtual)
   const mesPassado = abertos[abertos.length - 1]
   const doSaldo = mesPassado ? contas.filter((conta) => !conta.mesSaldo || conta.mesSaldo <= mesPassado) : contas

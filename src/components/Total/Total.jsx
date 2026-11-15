@@ -4,28 +4,16 @@ import { MdCallMade, MdCallReceived, MdChevronRight } from "react-icons/md";
 import { formatarDataISO, formatarMoeda, iniciais } from "../../utils/formatar";
 import { ehContaFixa, estaQuitado, totalParcelasDe } from "../../utils/parcelas";
 import { mesDoSaldo } from "../../utils/saldo";
+import { ehContaEntrePessoas, entraNoMes, mesmaPessoa, resumirAcertos } from "../../utils/acertos";
 import { PRIMEIRO_MES, deslocarMes, formatarMes, mesesEntre } from "../../utils/mes";
 import useMesAtual from "../../hooks/useMesAtual";
 import Modal from "../Modal/Modal";
 import SeletorMes from "../SeletorMes/SeletorMes";
 import "./Total.css";
 
-// Despesas lançadas para ou por outra pessoa.
-function ehContaEntrePessoas(conta) {
-  return conta.tipoConta === "Despesa" && Boolean(conta.selected ? conta.anotarPara : conta.responsavel);
-}
-
 // Mês a que a despesa pertence: o do cadastro ou, se ela foi marcada para sair do saldo
 // atual, o mês desse saldo (ex.: registrada em novembro, descontada do saldo de outubro).
 const mesDeReferencia = mesDoSaldo;
-
-// A despesa entra no seu mês de referência. Parcelados e contas fixas também entram,
-// com o valor da parcela, em cada mês seguinte do parcelamento enquanto não forem quitados.
-function entraNoMes(conta, mes) {
-  const deslocamento = mesesEntre(mesDeReferencia(conta), mes);
-  if (deslocamento === 0) return true;
-  return !estaQuitado(conta) && deslocamento > 0 && deslocamento < totalParcelasDe(conta);
-}
 
 // Último mês com parcela prevista de um parcelamento em aberto. Contas fixas ficam de fora
 // para não estender a navegação sem fim.
@@ -41,8 +29,8 @@ function contasDaPessoa(contas, pessoa, tipo) {
     .filter((conta) => conta.tipoConta === "Despesa")
     .filter((conta) =>
       tipo === "pagar"
-        ? conta.selected && conta.anotarPara === pessoa
-        : !conta.selected && conta.responsavel === pessoa
+        ? conta.selected && mesmaPessoa(conta.anotarPara, pessoa)
+        : !conta.selected && mesmaPessoa(conta.responsavel, pessoa)
     )
     .sort((a, b) => b.dataCadastro.localeCompare(a.dataCadastro));
 }
@@ -158,44 +146,7 @@ function Total({ ocultar }) {
     [contas, mes]
   );
 
-  const resumo = useMemo(() => {
-    const euDevo = {};
-    const meDevem = {};
-
-    contasDoMes
-      .filter(ehContaEntrePessoas)
-      .forEach((conta) => {
-        const valor = Number(
-          conta.valorFormatado || 0
-        );
-
-        if (conta.selected) {
-          euDevo[conta.anotarPara] =
-            (euDevo[conta.anotarPara] || 0) +
-            valor;
-        } else {
-          meDevem[conta.responsavel] =
-            (meDevem[conta.responsavel] || 0) +
-            valor;
-        }
-      });
-
-    return {
-      euDevo: Object.entries(euDevo)
-        .map(([pessoa, valor]) => ({
-          pessoa,
-          valor,
-        }))
-        .sort((a, b) => b.valor - a.valor),
-
-      meDevem: Object.entries(meDevem)
-        .map(([pessoa, valor]) => ({
-          pessoa,
-          valor,
-        }))
-        .sort((a, b) => b.valor - a.valor),
-    };
-  }, [contasDoMes]);
+  const resumo = useMemo(() => resumirAcertos(contasDoMes), [contasDoMes]);
 
   const totalEuDevo = useMemo(
     () =>

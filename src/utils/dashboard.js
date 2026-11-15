@@ -1,6 +1,7 @@
 import { calcularUsoCartoes, cartoesSemCadastro, comprasEmAberto, mesmoCartao, normalizarNomeCartao } from './cartoes'
 import { ehContaFixa, totalParcelasDe } from './parcelas'
 import { deslocarMes } from './mes'
+import { mesDoSaldo } from './saldo'
 
 export const TIPOS_DESPESA = ['Alimentação', 'Transporte', 'Lazer']
 
@@ -12,10 +13,11 @@ const indiceMes = (mes) => {
 }
 
 // Parcelados contam o valor da parcela em cada mês do parcelamento; contas fixas, em todos
-// os meses a partir do cadastro; à vista, só no mês da compra.
+// os meses a partir do início; à vista, só no mês. O mês é o do saldo de onde a despesa sai
+// (vence 05/01 → dezembro), que normalmente é o do cadastro.
 export function valorNoMes(conta, mes) {
   const parcelas = totalParcelasDe(conta)
-  const deslocamento = indiceMes(mes) - indiceMes(conta.dataCadastro.slice(0, 7))
+  const deslocamento = indiceMes(mes) - indiceMes(mesDoSaldo(conta))
   return deslocamento >= 0 && deslocamento < parcelas ? conta.valorFormatado : 0
 }
 
@@ -25,7 +27,7 @@ export function ultimoMesComDespesa(contas) {
     .filter((conta) => conta.tipoConta === 'Despesa' && !ehContaFixa(conta))
     .reduce((maior, conta) => {
       const parcelas = Number(conta.parcela) || 1
-      const indice = indiceMes(conta.dataCadastro.slice(0, 7)) + parcelas - 1
+      const indice = indiceMes(mesDoSaldo(conta)) + parcelas - 1
       const mes = `${Math.floor((indice - 1) / 12)}-${String(((indice - 1) % 12) + 1).padStart(2, '0')}`
       return mes > maior ? mes : maior
     }, '')

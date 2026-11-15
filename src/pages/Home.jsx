@@ -1,8 +1,8 @@
 import './Home.css'
-import { useCallback, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import { App } from '@capacitor/app'
-import { MdAdd, MdCalculate, MdChevronRight, MdPayment, MdRemove, MdSavings } from 'react-icons/md'
+import { MdAdd, MdCalculate, MdChevronRight, MdCloudOff, MdCloudUpload, MdPayment, MdRemove, MdSavings } from 'react-icons/md'
 import Cabecalho from '../components/Cabecalho/Cabecalho'
 import Saldo from '../components/Saldo/Saldo'
 import Extrato from '../components/Extrato/Extrato'
@@ -21,15 +21,20 @@ import MinhaConta from '../components/MinhaConta/MinhaConta'
 import Notificacoes from '../components/Notificacoes/Notificacoes'
 import Tutorial from '../components/Tutorial/Tutorial'
 import Atualizacao from '../components/Atualizacao/Atualizacao'
-import { PASSOS_GERAL, PASSOS_SIMULACAO } from '../components/Tutorial/passos'
-import { limparErro } from '../store/extrato'
+import Copiloto from '../components/Copiloto/Copiloto'
+import ResumoMes from '../components/ResumoMes/ResumoMes'
+import { PASSOS_GERAL, PASSOS_NOVIDADES, PASSOS_SIMULACAO, VERSAO_NOVIDADES } from '../components/Tutorial/passos'
+import { limparErro, limparFalhasEnvio } from '../store/extrato'
 import { limparErroCartoes } from '../store/cartoes'
 import supabase from '../services/supabase'
 import { buscarApkMaisRecente, buscarAtualizacao } from '../services/atualizacao'
 import { gravarAvisoAppVisto, gravarNotificacoesLidas, gravarTutorialPulado, lerNotificacoesLidas, lerTutorialPulado } from '../services/notificacoesLidas'
-import { gerarNotificacoes } from '../utils/notificacoes'
+import { gerarAlertasFinanceiros, gerarNotificacoes, gerarNotificacoesRevisao } from '../utils/notificacoes'
 import { calcularMeta } from '../utils/metas'
+import { APRENDIZADO_VAZIO, aprenderComFormulario } from '../utils/aprendizado'
+import { formatarMes } from '../utils/mes'
 import useHoje from '../hooks/useHoje'
+import useSincronizacao from '../hooks/useSincronizacao'
 
 const TITULOS = {
   inicio: 'Início',
@@ -45,6 +50,14 @@ const TITULOS = {
 const TUTORIAIS = {
   geral: { titulo: 'Como usar o Controla+', passos: PASSOS_GERAL },
   simulacao: { titulo: 'Como usar a Simulação', passos: PASSOS_SIMULACAO },
+  [VERSAO_NOVIDADES]: { titulo: 'Novidades', passos: PASSOS_NOVIDADES },
+}
+
+function textoPendencias(quantidade, enviando) {
+  if (quantidade === 0) return 'Sem internet: mostrando os dados salvos neste aparelho.'
+  const alteracoes = `${quantidade} ${quantidade === 1 ? 'alteração feita' : 'alterações feitas'} sem internet`
+  if (enviando) return `Enviando ${alteracoes}...`
+  return `${alteracoes} ${quantidade === 1 ? 'aguarda' : 'aguardam'} conexão. O envio é automático.`
 }
 
 function Home({ saudacao, usuario }) {
@@ -53,6 +66,23 @@ function Home({ saudacao, usuario }) {
   const [novaConta, setNovaConta] = useState(null)
   const [contaSelecionada, setContaSelecionada] = useState(null)
   const [contaEditada, setContaEditada] = useState(null)
+  const [copilotoAberto, setCopilotoAberto] = useState(false)
+  // O chat abre já na análise de dicas quando vem do aviso de saldo no sino ou do resumo do mês.
+  const [copilotoComDicas, setCopilotoComDicas] = useState(false)
+  // Abertos a partir das dicas do Marcão: Simulação e formulário de meta já preenchidos.
+  const [pedidoSimulacao, setPedidoSimulacao] = useState(null)
+  const [pedidoMeta, setPedidoMeta] = useState(null)
+  // Mês recém-quitado: mostra o resumo automático do Marcão.
+  const [resumoMes, setResumoMes] = useState(null)
+  const [sugestaoConta, setSugestaoConta] = useState(null)
+  // Campos que o Marcão preencheu por padrão, por movimentação: ficam no perfil (valem em todos os aparelhos).
+  const [revisoes, setRevisoes] = useState(() => usuario.user_metadata?.revisoesCopiloto ?? {})
+  const revisoesAtuais = useRef(revisoes)
+  // O que o usuário ensinou ao Marcão no chat ("roxinho é o Nubank"): também fica no perfil.
+  const [aprendizado, setAprendizado] = useState(() => usuario.user_metadata?.aprendizadoCopiloto ?? APRENDIZADO_VAZIO)
+  const aprendizadoAtual = useRef(aprendizado)
+  // Sem internet o perfil não é salvo: fica marcado para reenviar quando a conexão voltar.
+  const perfilPendente = useRef(false)
   const [minhaContaAberta, setMinhaContaAberta] = useState(false)
   const [notificacoesLidas, setNotificacoesLidas] = useState(() => lerNotificacoesLidas(usuario.id))
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(null)
@@ -70,11 +100,122 @@ function Home({ saudacao, usuario }) {
   const carregando = useSelector((state) => state.extrato.carregando)
   const erro = useSelector((state) => state.extrato.erro)
   const erroCartoes = useSelector((state) => state.cartoes.erro)
+  const fila = useSelector((state) => state.extrato.fila)
+  const sincronizando = useSelector((state) => state.extrato.sincronizando)
+  const semConexao = useSelector((state) => state.extrato.semConexao)
+  const falhasEnvio = useSelector((state) => state.extrato.falhasEnvio)
+  const idsSincronizados = useSelector((state) => state.extrato.idsSincronizados)
   const dispatch = useDispatch()
+  useSincronizacao(usuario.id)
 
   const fecharNovaConta = useCallback(() => setNovaConta(null), [])
   const fecharDetalhe = useCallback(() => setContaSelecionada(null), [])
   const fecharEdicao = useCallback(() => setContaEditada(null), [])
+  const fecharCopiloto = useCallback(() => setCopilotoAberto(false), [])
+  const fecharSugestao = useCallback(() => setSugestaoConta(null), [])
+
+  const store = useStore()
+
+  const salvarPerfil = useCallback((dados) => {
+    supabase.auth.updateUser({ data: dados })
+      .then(({ error }) => {
+        if (error) perfilPendente.current = true
+      })
+      .catch(() => {
+        perfilPendente.current = true
+      })
+  }, [])
+
+  useEffect(() => {
+    function reenviarPerfil() {
+      if (!perfilPendente.current) return
+      perfilPendente.current = false
+      salvarPerfil({ revisoesCopiloto: revisoesAtuais.current, aprendizadoCopiloto: aprendizadoAtual.current })
+    }
+    window.addEventListener('online', reenviarPerfil)
+    return () => window.removeEventListener('online', reenviarPerfil)
+  }, [salvarPerfil])
+
+  // Parte sempre da versão mais recente (o Marcão pode registrar vários lançamentos em sequência)
+  // e descarta avisos de movimentações que já foram apagadas.
+  const atualizarRevisoes = useCallback((alterar) => {
+    const existentes = new Set(store.getState().extrato.contasExtrato.map((conta) => String(conta.id)))
+    const novas = Object.fromEntries(Object.entries(alterar(revisoesAtuais.current)).filter(([id]) => existentes.has(id)))
+    revisoesAtuais.current = novas
+    setRevisoes(novas)
+    salvarPerfil({ revisoesCopiloto: novas })
+  }, [store, salvarPerfil])
+
+  // Movimentação registrada sem internet ganha o id definitivo ao ser enviada: o aviso de revisão acompanha.
+  useEffect(() => {
+    const trocas = Object.entries(idsSincronizados).filter(([idLocal]) => revisoesAtuais.current[idLocal])
+    if (trocas.length === 0) return
+    atualizarRevisoes((atuais) => {
+      const novas = { ...atuais }
+      trocas.forEach(([idLocal, idDefinitivo]) => {
+        novas[idDefinitivo] = novas[idLocal]
+        delete novas[idLocal]
+      })
+      return novas
+    })
+  }, [idsSincronizados, atualizarRevisoes])
+
+  // Campos que o Marcão preencheu por padrão viram aviso no sino até a movimentação ser revisada.
+  // O chat continua aberto para registrar outras movimentações.
+  function registrarPeloCopiloto(conta, camposAssumidos) {
+    if (camposAssumidos.length > 0) atualizarRevisoes((atuais) => ({ ...atuais, [conta.id]: camposAssumidos }))
+  }
+
+  const salvarAprendizado = useCallback((novo) => {
+    aprendizadoAtual.current = novo
+    setAprendizado(novo)
+    salvarPerfil({ aprendizadoCopiloto: novo })
+  }, [salvarPerfil])
+
+  const fecharResumoMes = useCallback(() => setResumoMes(null), [])
+
+  function abrirCopiloto(comDicas) {
+    setCopilotoComDicas(comDicas)
+    setCopilotoAberto(true)
+  }
+
+  function abrirSimulacaoSugerida({ nome, entrada }) {
+    setCopilotoAberto(false)
+    alterarAba('simulacao')
+    setPedidoSimulacao((atual) => ({ chave: (atual?.chave ?? 0) + 1, nome, entrada }))
+  }
+
+  function abrirMetaSugerida(sugestao) {
+    setCopilotoAberto(false)
+    alterarAba('metas')
+    setPedidoMeta((atual) => ({ chave: (atual?.chave ?? 0) + 1, sugestao }))
+  }
+
+  function revisarSugestao(sugestao) {
+    setCopilotoAberto(false)
+    setSugestaoConta(sugestao)
+  }
+
+  // Tipo de despesa trocado no formulário em algo que o Marcão propôs: ele aprende para a próxima vez.
+  function aprenderDoFormulario(proposta, salva) {
+    const novo = aprenderComFormulario(aprendizadoAtual.current, proposta, salva)
+    if (novo) salvarAprendizado(novo)
+  }
+
+  function concluirSugestao(salva) {
+    aprenderDoFormulario(sugestaoConta, salva)
+    fecharSugestao()
+  }
+
+  function concluirEdicao(salva) {
+    // Só as movimentações do Marcão com aviso de revisão ensinam; nas demais, a correção
+    // entra no histórico do Extrato e conta na escolha do tipo mais usado.
+    if (revisoes[contaEditada?.id]) {
+      aprenderDoFormulario(contaEditada, salva)
+      atualizarRevisoes((atuais) => Object.fromEntries(Object.entries(atuais).filter(([id]) => id !== String(contaEditada.id))))
+    }
+    fecharEdicao()
+  }
 
   function editarConta(conta) {
     setContaSelecionada(null)
@@ -103,19 +244,24 @@ function Home({ saudacao, usuario }) {
   const atualizacaoAberta = atualizacao && (atualizacao.obrigatoria || atualizacao.codigo_versao !== atualizacaoAdiada) ? atualizacao : null
   const adiarAtualizacao = useCallback(() => setAtualizacaoAdiada(atualizacao?.codigo_versao ?? null), [atualizacao])
 
-  // Cada tutorial abre sozinho uma vez: o geral no primeiro acesso e o da simulação na primeira
-  // visita ao módulo. Depois só abre quando pedido (Minha conta ou "Como funciona" na Simulação).
+  // Cada tutorial abre sozinho uma vez: o geral no primeiro acesso, as novidades para quem já usava
+  // o app e o da simulação na primeira visita ao módulo. Depois só abre quando pedido (Minha conta
+  // ou "Como funciona" na Simulação).
   const tutorialAutomatico = carregando
     ? null
-    : !tutoriaisVistos.geral ? 'geral' : aba === 'simulacao' && !tutoriaisVistos.simulacao ? 'simulacao' : null
+    : !tutoriaisVistos.geral ? 'geral'
+      : !tutoriaisVistos[VERSAO_NOVIDADES] ? VERSAO_NOVIDADES
+        : aba === 'simulacao' && !tutoriaisVistos.simulacao ? 'simulacao' : null
   const tutorialAberto = tutorialEscolhido ?? tutorialAutomatico
 
   // Fechar, pular ou concluir marca como visto. O registro fica no perfil do usuário (Supabase);
   // se não for salvo, o tutorial volta a aparecer no próximo acesso.
+  // O tutorial geral já inclui as novidades: quem o vê não precisa do tour de novidades depois.
   const fecharTutorial = useCallback(() => {
     setTutorialEscolhido(null)
-    if (tutoriaisVistos[tutorialAberto]) return
-    const vistos = { ...tutoriaisVistos, [tutorialAberto]: true }
+    const marcar = tutorialAberto === 'geral' ? ['geral', VERSAO_NOVIDADES] : [tutorialAberto]
+    if (marcar.every((chave) => tutoriaisVistos[chave])) return
+    const vistos = { ...tutoriaisVistos, ...Object.fromEntries(marcar.map((chave) => [chave, true])) }
     setTutoriaisVistos(vistos)
     supabase.auth.updateUser({ data: { tutoriais: vistos } })
   }, [tutoriaisVistos, tutorialAberto])
@@ -142,6 +288,8 @@ function Home({ saudacao, usuario }) {
   const hoje = useHoje()
   const notificacoes = [
     ...(apk && tutorialPulado ? [{ id: 'baixar-app', tipo: 'app' }] : []),
+    ...gerarAlertasFinanceiros(contas, fechamento, hoje.slice(0, 7)),
+    ...gerarNotificacoesRevisao(contas, revisoes),
     ...gerarNotificacoes(contas, hoje),
   ]
   const notificacoesNovas = notificacoes.filter((notificacao) => !notificacoesLidas.includes(notificacao.id))
@@ -160,7 +308,7 @@ function Home({ saudacao, usuario }) {
     .filter((meta) => meta.status === 'ativa')
     .map((meta) => ({ meta, situacao: calcularMeta(meta, hoje.slice(0, 7)) }))
     .filter(({ situacao }) => !situacao.atingida)
-  const sobraAberta = !carregando && metasCarregadas && !tutorialAberto && !atualizacaoAberta
+  const sobraAberta = !carregando && metasCarregadas && !tutorialAberto && !atualizacaoAberta && !resumoMes
     && fechamento?.saldo > 0 && fechamento.mes > sobraPerguntada && metasEmAberto.length > 0
 
   const fecharSobra = useCallback(() => {
@@ -169,6 +317,9 @@ function Home({ saudacao, usuario }) {
   }, [fechamento])
 
   function alterarAba(novaAba) {
+    // Sair da aba descarta o que o Marcão tinha preenchido nela.
+    if (novaAba !== 'simulacao') setPedidoSimulacao(null)
+    if (novaAba !== 'metas') setPedidoMeta(null)
     setAba(novaAba)
     window.scrollTo({ top: 0 })
   }
@@ -183,7 +334,7 @@ function Home({ saudacao, usuario }) {
 
   return (
     <div className='app'>
-      <Navegacao aba={aba} onAlterarAba={alterarAba} onNovaConta={setNovaConta} onAbrirConta={() => setMinhaContaAberta(true)} />
+      <Navegacao aba={aba} onAlterarAba={alterarAba} onNovaConta={setNovaConta} onRegistrarPorTexto={() => abrirCopiloto(false)} onAbrirConta={() => setMinhaContaAberta(true)} />
 
       <main className='app-conteudo'>
         <Cabecalho
@@ -196,7 +347,7 @@ function Home({ saudacao, usuario }) {
           onAbrirConta={() => setMinhaContaAberta(true)}
           onSair={() => supabase.auth.signOut()}
         >
-          {aba === 'inicio' && <Saldo ocultar={ocultarValores} />}
+          {aba === 'inicio' && <Saldo ocultar={ocultarValores} onMesQuitado={setResumoMes} />}
         </Cabecalho>
 
         <div className='pagina'>
@@ -204,6 +355,20 @@ function Home({ saudacao, usuario }) {
             <div className='app-erro' role='alert'>
               <span>Não foi possível sincronizar com o servidor: {erro}</span>
               <button onClick={() => dispatch(limparErro())}>Fechar</button>
+            </div>
+          )}
+
+          {(fila.length > 0 || semConexao) && (
+            <div className='app-aviso' role='status'>
+              {sincronizando ? <MdCloudUpload size={20} aria-hidden='true' /> : <MdCloudOff size={20} aria-hidden='true' />}
+              <span>{textoPendencias(fila.length, sincronizando)}</span>
+            </div>
+          )}
+
+          {falhasEnvio.length > 0 && (
+            <div className='app-erro' role='alert'>
+              <span>{falhasEnvio.join(' ')} Os dados foram atualizados com o que está salvo no servidor.</span>
+              <button onClick={() => dispatch(limparFalhasEnvio())}>Fechar</button>
             </div>
           )}
 
@@ -249,9 +414,11 @@ function Home({ saudacao, usuario }) {
 
           {!carregando && aba === 'dashboard' && <Dashboard />}
 
-          {!carregando && aba === 'simulacao' && <Simulacao onAbrirTutorial={() => abrirTutorial('simulacao')} />}
+          {!carregando && aba === 'simulacao' && (
+            <Simulacao key={pedidoSimulacao?.chave ?? 'simulacao'} pedido={pedidoSimulacao} onAbrirTutorial={() => abrirTutorial('simulacao')} />
+          )}
 
-          {!carregando && aba === 'metas' && <Metas ocultar={ocultarValores} />}
+          {!carregando && aba === 'metas' && <Metas key={pedidoMeta?.chave ?? 'metas'} ocultar={ocultarValores} sugestaoInicial={pedidoMeta?.sugestao} />}
 
           {!carregando && aba === 'valores' && <Total />}
         </div>
@@ -271,7 +438,28 @@ function Home({ saudacao, usuario }) {
 
       {contaEditada && (
         <Modal titulo='Editar movimentação' onFechar={fecharEdicao}>
-          <FormConta conta={contaEditada} onConcluir={fecharEdicao} />
+          <FormConta conta={contaEditada} onConcluir={concluirEdicao} />
+        </Modal>
+      )}
+
+      {copilotoAberto && (
+        <Modal titulo='Marcão' onFechar={fecharCopiloto}>
+          <Copiloto
+            key={copilotoComDicas ? 'dicas' : 'chat'}
+            iniciarDicas={copilotoComDicas}
+            aprendizado={aprendizado}
+            onAprender={salvarAprendizado}
+            onRegistrado={registrarPeloCopiloto}
+            onRevisar={revisarSugestao}
+            onSimular={abrirSimulacaoSugerida}
+            onCriarMeta={abrirMetaSugerida}
+          />
+        </Modal>
+      )}
+
+      {sugestaoConta && (
+        <Modal titulo='Revisar movimentação' onFechar={fecharSugestao}>
+          <FormConta sugestao={sugestaoConta} onConcluir={concluirSugestao} />
         </Modal>
       )}
 
@@ -283,6 +471,14 @@ function Home({ saudacao, usuario }) {
             onVerParcelas={() => {
               fecharNotificacoes()
               alterarAba('parcelas')
+            }}
+            onRevisar={(conta) => {
+              fecharNotificacoes()
+              setContaEditada(conta)
+            }}
+            onPedirDicas={() => {
+              fecharNotificacoes()
+              abrirCopiloto(true)
             }}
             onAbrirConta={() => {
               gravarAvisoAppVisto(usuario.id)
@@ -303,6 +499,19 @@ function Home({ saudacao, usuario }) {
       {tutorialAberto && (
         <Modal titulo={TUTORIAIS[tutorialAberto].titulo} onFechar={fecharTutorial}>
           <Tutorial key={tutorialAberto} passos={passosTutorial} onConcluir={fecharTutorial} onPular={pularTutorial} />
+        </Modal>
+      )}
+
+      {resumoMes && (
+        <Modal titulo={`Resumo de ${formatarMes(resumoMes).toLowerCase()}`} onFechar={fecharResumoMes}>
+          <ResumoMes
+            mes={resumoMes}
+            onFechar={fecharResumoMes}
+            onConversar={() => {
+              fecharResumoMes()
+              abrirCopiloto(true)
+            }}
+          />
         </Modal>
       )}
 

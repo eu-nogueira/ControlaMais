@@ -8,7 +8,8 @@ import { calcularSaldoExibido, mesesParaFechar, projetarProximoSalario } from '.
 import useMesAtual from '../../hooks/useMesAtual'
 import './Saldo.css'
 
-function Saldo({ ocultar }) {
+// `onMesQuitado(mes)`: chamado depois de quitar, com o último mês fechado (para o resumo do mês).
+function Saldo({ ocultar, onMesQuitado }) {
     const contas = useSelector((state) => state.extrato.contasExtrato)
     const fechamento = useSelector((state) => state.extrato.fechamento)
     const [confirmarQuitacao, setConfirmarQuitacao] = useState(false)
@@ -31,7 +32,8 @@ function Saldo({ ocultar }) {
             return
         }
         setQuitando(true)
-        await dispatch(quitarMesesAnteriores(mesAtual))
+        const resultado = await dispatch(quitarMesesAnteriores(mesAtual))
+        if (quitarMesesAnteriores.fulfilled.match(resultado)) onMesQuitado?.(resultado.payload.fechamento.mes)
         setQuitando(false)
         setConfirmarQuitacao(false)
     }
@@ -81,6 +83,10 @@ function Saldo({ ocultar }) {
                     Enquanto as <strong>contas do mês passado não forem quitadas</strong>, ao registrar uma despesa do mês atual você
                     escolhe se ela sai do saldo exibido ou do próximo salário. Sem essa escolha, vale o vencimento: vencendo neste mês,
                     sai do saldo exibido; vencendo depois, fica para o próximo salário.
+                </p>
+                <p>
+                    Despesas com <strong>vencimento a partir de dois meses à frente</strong> saem do saldo do mês anterior ao
+                    vencimento: vencendo em 05/01, saem do saldo de dezembro e só aparecem nele quando dezembro chegar.
                 </p>
                 <p>
                     Depois de quitar o mês passado, enquanto o próximo salário não for registrado, ele é estimado pela

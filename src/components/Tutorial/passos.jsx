@@ -1,10 +1,58 @@
 import {
-  MdAccountBalanceWallet, MdAdd, MdAndroid, MdAttachMoney, MdBalance, MdCalculate, MdCompareArrows, MdCreditCard, MdHome, MdInfoOutline, MdInsights, MdNotificationsNone,
-  MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSave, MdSavings, MdShield, MdShoppingCart, MdSwapHoriz,
-  MdTaskAlt, MdTipsAndUpdates, MdTune, MdVisibility
+  MdAccountBalanceWallet, MdAdd, MdAndroid, MdAttachMoney, MdAutoAwesome, MdBalance, MdCalculate, MdCloudOff, MdCompareArrows, MdCreditCard, MdHome,
+  MdInfoOutline, MdInsights, MdMic, MdNotificationsNone, MdPayment, MdPeopleAlt, MdPieChart, MdReceiptLong, MdSave, MdSavings, MdShield,
+  MdShoppingCart, MdSwapHoriz, MdTaskAlt, MdTipsAndUpdates, MdTune, MdVisibility
 } from 'react-icons/md'
+import { MESES_RESERVA } from '../../utils/metas'
 
 const ICONE = 26
+
+// Passos usados no tutorial geral e também no tour de novidades.
+const PASSO_MARCAO = {
+  titulo: 'Marcão, seu copiloto',
+  icone: <MdAutoAwesome size={ICONE} />,
+  conteudo: (
+    <>
+      <p>Escreva do seu jeito, como <strong>"devo 98 reais pro Fulano do Habib's"</strong> ou <strong>"TV de 1.200 em 10x no Nubank"</strong>, e o Marcão monta o lançamento para você conferir e <strong>registrar</strong>.</p>
+      <p><MdMic size={16} aria-hidden='true' /> Toque no <strong>microfone</strong> para falar em vez de escrever.</p>
+      <ul>
+        <li><strong>Vários de uma vez:</strong> "Uber 20 e mercado 150".</li>
+        <li><strong>Corrigir antes de registrar:</strong> "muda o vencimento pra dia 10", "foram 3x", "foi no Nubank".</li>
+        <li><strong>O que faltar</strong> ele pergunta; o que você não disser, como o vencimento, recebe um padrão e vira um aviso no sino para você conferir.</li>
+      </ul>
+      <p>Ele <strong>aprende com você</strong>: ensine "roxinho é o Nubank" ou "habib's é alimentação", e ele também aprende quando você corrige o tipo de despesa. Pergunte "o que você aprendeu?" para ver.</p>
+    </>
+  ),
+}
+
+const PASSO_PERGUNTAS = {
+  titulo: 'Perguntas e dicas',
+  icone: <MdTipsAndUpdates size={ICONE} />,
+  conteudo: (
+    <>
+      <p>Pergunte ao Marcão, por exemplo:</p>
+      <ul>
+        <li>"Quanto gastei com alimentação?", "qual meu saldo?", "quanto a Ana me deve?", "o que vence essa semana?"</li>
+        <li><strong>"Posso comprar uma TV de 2.000 em 10x?"</strong>: ele simula a compra nos próximos meses e diz se cabe ou quando caberia.</li>
+        <li><strong>"Me dá dicas"</strong>: ele pergunta se você vai receber 13º, férias ou FGTS e analisa o saldo, a projeção, as parcelas e o extrato para sugerir o que fazer, com botões para simular ou criar uma meta.</li>
+        <li>"Quais minhas assinaturas?" e "resumo do mês".</li>
+      </ul>
+      <p>As dicas são feitas a partir dos seus registros no app e não são recomendação de investimento.</p>
+    </>
+  ),
+}
+
+const PASSO_SEM_INTERNET = {
+  titulo: 'Sem internet',
+  icone: <MdCloudOff size={ICONE} />,
+  conteudo: (
+    <>
+      <p>Sem conexão, você continua <strong>registrando, editando e excluindo movimentações</strong> e marcando parcelas pagas. Elas aparecem na hora, marcadas como <strong>aguardando envio</strong>, e são enviadas sozinhas quando a internet voltar.</p>
+      <p>O app abre com os últimos dados salvos no aparelho. Para isso, mantenha <strong>"lembrar de mim"</strong> marcado no login: sem ele, o que estiver aguardando envio se perde ao fechar o app.</p>
+      <p>Quitar o mês, cartões, metas e simulações precisam de internet.</p>
+    </>
+  ),
+}
 
 // Visão geral e rápida do app.
 export const PASSOS_GERAL = [
@@ -13,7 +61,7 @@ export const PASSOS_GERAL = [
     icone: <MdHome size={ICONE} />,
     conteudo: (
       <>
-        <p>Aqui você registra o que entra e o que sai da sua conta, acompanha parcelas, cartões e simula decisões antes de tomá-las.</p>
+        <p>Aqui você registra o que entra e o que sai da sua conta, acompanha parcelas, cartões e simula decisões antes de tomá-las. E conta com o <strong>Marcão</strong>, seu copiloto, para registrar por texto ou voz e pedir dicas.</p>
         <p>Este tour é rápido. Você pode revê-lo quando quiser em <strong>Minha conta</strong>.</p>
       </>
     ),
@@ -53,8 +101,10 @@ export const PASSOS_GERAL = [
           <li><strong>Vence neste mês:</strong> é descontada do saldo atual.</li>
           <li><strong>Vence depois:</strong> fica para o <strong>próximo salário</strong> e só é descontada depois de quitar o mês passado.</li>
         </ul>
+        <p><strong>Vencimento a partir de dois meses à frente</strong> sai do saldo do mês anterior ao vencimento, em qualquer época: vencendo em 05/01, sai do saldo de dezembro e só aparece nele quando dezembro chegar.</p>
         <p>Ao quitar, o novo saldo desconta as <strong>parcelas a pagar do mês</strong> (as mesmas da aba Parcelas) e as despesas que ficaram para o próximo salário. Na aba <strong>Acertos</strong>, o mês quitado passa a aparecer como <strong>Pago</strong>.</p>
         <p>Até o próximo salário ser registrado, ele é estimado pela <strong>média salarial</strong>: a média das receitas com <strong>"salário" na descrição</strong> dos 3 últimos meses ou, se ainda não houver 3, a do último mês.</p>
+        <p>Ao quitar, o <strong>Marcão mostra o resumo do mês</strong>: quanto sobrou, o que mais pesou, a comparação com o mês anterior, parcelas que terminaram e assinaturas que continuam sendo cobradas.</p>
         <p>Se sobrou dinheiro no mês quitado e você tem metas em andamento, o app pergunta uma vez se quer <strong>guardar parte da sobra</strong> em uma delas.</p>
       </>
     ),
@@ -64,18 +114,20 @@ export const PASSOS_GERAL = [
     icone: <MdAdd size={ICONE} />,
     conteudo: (
       <>
-        <p>Toque no botão <strong>+</strong> para lançar uma <strong>receita</strong> ou <strong>despesa</strong>.</p>
-        <p>Nas despesas você pode informar parcelas, marcar como conta fixa, indicar o cartão e se outra pessoa vai pagar. Lembre-se: compras no débito ficam de fora.</p>
+        <p>Toque no botão <strong>+</strong> e escolha <strong>Registrar manualmente</strong>, para preencher o formulário, ou <strong>Falar com o Marcão</strong>, para registrar escrevendo ou falando.</p>
+        <p>Nas despesas você pode informar parcelas, marcar como conta fixa, indicar o cartão e se outra pessoa vai pagar. Ao digitar o nome de uma pessoa, o app sugere os nomes que você já usou. Lembre-se: compras no débito ficam de fora.</p>
       </>
     ),
   },
+  PASSO_MARCAO,
+  PASSO_PERGUNTAS,
   {
     titulo: 'Extrato',
     icone: <MdReceiptLong size={ICONE} />,
     conteudo: (
       <>
         <p>Veja as movimentações mês a mês. Filtre por receitas, despesas ou por uma <strong>data específica</strong>.</p>
-        <p>Parcelados aparecem em todos os meses do parcelamento, com quantas parcelas já foram pagas, igual à aba Parcelas.</p>
+        <p>Cada movimentação aparece na <strong>data em que foi registrada</strong>. Nos meses seguintes, parcelados e contas fixas ficam no grupo <strong>Parcelas e contas fixas do mês</strong>, no fim da lista, com o número da parcela e a data da compra.</p>
         <p>Toque em uma movimentação para ver os detalhes, editar ou excluir.</p>
       </>
     ),
@@ -87,7 +139,7 @@ export const PASSOS_GERAL = [
       <ul>
         <li><MdCreditCard size={16} aria-hidden='true' /> <strong>Parcelas:</strong> quanto falta pagar e registro das parcelas pagas.</li>
         <li><MdPeopleAlt size={16} aria-hidden='true' /> <strong>Acertos:</strong> quanto você tem a receber e a pagar referente a outras pessoas, mês a mês.</li>
-        <li><MdPieChart size={16} aria-hidden='true' /> <strong>Dashboards:</strong> seus gastos comparados com o mês anterior, para onde eles estão indo, quem está usando cada cartão e a projeção da sobra nos próximos meses.</li>
+        <li><MdPieChart size={16} aria-hidden='true' /> <strong>Dashboards:</strong> seus gastos comparados com o mês anterior, para onde eles estão indo, quem está usando cada cartão e a projeção da sobra nos próximos meses. Cada despesa conta no mês do saldo de onde ela sai.</li>
         <li><MdPayment size={16} aria-hidden='true' /> <strong>Cartões:</strong> seus cartões e o que está em cada um.</li>
       </ul>
     ),
@@ -97,7 +149,8 @@ export const PASSOS_GERAL = [
     icone: <MdPeopleAlt size={ICONE} />,
     conteudo: (
       <>
-        <p>Use as setas no topo para escolher o mês. Cada despesa entra no <strong>mês em que foi registrada</strong>; se você escolheu descontá-la do <strong>saldo atual</strong>, ela entra no mês desse saldo.</p>
+        <p>Use as setas no topo para escolher o mês. Cada despesa entra no <strong>mês do saldo de onde ela sai</strong>: normalmente o do registro, ou o que você escolheu, ou o mês anterior a um vencimento distante.</p>
+        <p>O mesmo nome escrito de jeitos diferentes, como "Nagano Store" e "nagano store", conta como <strong>uma pessoa só</strong>.</p>
         <p>Parcelados e contas fixas aparecem com o valor da parcela em cada mês seguinte, <strong>até serem quitados</strong>.</p>
         <p>Abaixo do mês aparece se ele está <strong>Em aberto</strong> ou <strong>Pago</strong>: vira Pago quando você toca em "Contas do mês passado quitadas". Toque em uma pessoa para ver as despesas daquele mês.</p>
       </>
@@ -111,7 +164,7 @@ export const PASSOS_GERAL = [
         <p>Guarde a sobra de cada mês em três tipos:</p>
         <ul>
           <li><strong>Meta:</strong> objetivo com valor e prazo, como uma viagem. O app calcula quanto guardar por mês para chegar lá.</li>
-          <li><strong>Reserva:</strong> dinheiro guardado sem prazo, como a reserva de emergência. O valor ideal sugerido é de 6 meses das suas despesas.</li>
+          <li><strong>Reserva:</strong> dinheiro guardado sem prazo, como a reserva de emergência. O valor ideal sugerido é de {MESES_RESERVA} meses das suas despesas.</li>
           <li><strong>Meta dinâmica:</strong> o depósito aumenta um pouco a cada mês. Abra o <strong>planejamento</strong> para marcar cada mês como guardado, pausar ou encerrar.</li>
         </ul>
         <p>Use <strong>Guardar</strong> e <strong>Resgatar</strong> para registrar o que entra e sai. <strong>Guardar não altera o saldo disponível</strong>: o dinheiro vem da sobra que ficou na conta.</p>
@@ -126,6 +179,7 @@ export const PASSOS_GERAL = [
       <p>Vai pegar um empréstimo ou vai receber um dinheiro extra, como 13º ou Férias? A <strong>Simulação</strong> mostra o efeito nas suas parcelas antes de você decidir. Ela tem um tutorial próprio, mais completo.</p>
     ),
   },
+  PASSO_SEM_INTERNET,
   {
     // Só aparece no navegador de aparelhos Android, quando há APK publicado.
     titulo: 'App para Android',
@@ -144,7 +198,12 @@ export const PASSOS_GERAL = [
     icone: <MdNotificationsNone size={ICONE} />,
     conteudo: (
       <>
-        <p>O <strong>sino</strong> avisa sobre parcelas que vencem nos próximos dias ou já venceram.</p>
+        <p>O <strong>sino</strong> avisa sobre:</p>
+        <ul>
+          <li>parcelas que vencem nos próximos dias ou já venceram;</li>
+          <li>lançamentos do Marcão com campos preenchidos por padrão, para você conferir;</li>
+          <li><strong>saldo negativo</strong> e meses com <strong>sobra negativa</strong> na projeção: toque no aviso para o Marcão sugerir o que fazer.</li>
+        </ul>
         <p>Toque no seu nome para abrir <strong>Minha conta</strong>: lá você altera nome, senha, tema claro ou escuro e revê os tutoriais.</p>
       </>
     ),
@@ -172,7 +231,7 @@ export const PASSOS_SIMULACAO = [
         <p>No início da simulação, escolha entre:</p>
         <ul>
           <li><strong>Empréstimo:</strong> dinheiro que entra agora e é pago em parcelas, com juros.</li>
-          <li><strong>Valor a receber:</strong> dinheiro seu que vai entrar, como 13º salário, férias, restituição do IR, férias, PLR ou outro valor.</li>
+          <li><strong>Valor a receber:</strong> dinheiro seu que vai entrar, como 13º salário, FGTS, restituição do IR, férias, PLR ou outro valor.</li>
         </ul>
         <p>Os dois tipos funcionam de forma parecida, mas só o empréstimo recebe uma avaliação de vantajoso ou não.</p>
       </>
@@ -214,7 +273,7 @@ export const PASSOS_SIMULACAO = [
     icone: <MdBalance size={ICONE} />,
     conteudo: (
       <>
-        <p>A <strong>renda mensal</strong> vem sugerida com a média das suas receitas dos últimos meses. Confira e ajuste se precisar.</p>
+        <p>A <strong>renda mensal</strong> vem sugerida com a média das suas receitas dos últimos meses (ou com as deste mês, se ainda não houver meses anteriores). Confira e ajuste se precisar.</p>
         <p>Com ela, o app verifica se o seu saldo fica negativo em algum dos próximos meses. Sem a renda, essa verificação não é feita.</p>
         <p>O <strong>saldo disponível hoje</strong> já desconta as despesas e a parcela deste mês de cada parcelamento.</p>
       </>
@@ -306,8 +365,43 @@ export const PASSOS_SIMULACAO = [
     conteudo: (
       <>
         <p>Dica: crie mais de um cenário, por exemplo propostas de bancos diferentes, e compare antes de decidir.</p>
+        <p>Nas dicas do Marcão, o botão <strong>Simular isso</strong> abre uma simulação já preenchida com a sugestão dele.</p>
         <p>Você pode rever este tutorial no botão <strong>Como funciona</strong> da Simulação ou em <strong>Minha conta</strong>.</p>
       </>
+    ),
+  },
+]
+
+// Tour de novidades: mostrado uma vez a quem já tinha visto o tutorial geral. Para uma próxima leva de
+// novidades, troque a versão (e os passos): ela é a chave guardada no perfil como "visto".
+export const VERSAO_NOVIDADES = 'novidades-2026-11'
+
+export const PASSOS_NOVIDADES = [
+  {
+    titulo: 'Novidades no Controla+',
+    icone: <MdAutoAwesome size={ICONE} />,
+    conteudo: (
+      <>
+        <p>O app ganhou um copiloto, o <strong>Marcão</strong>, e passou a funcionar <strong>sem internet</strong>. Veja em poucos passos o que mudou.</p>
+        <p>Você pode rever este tour quando quiser em <strong>Minha conta</strong>.</p>
+      </>
+    ),
+  },
+  PASSO_MARCAO,
+  PASSO_PERGUNTAS,
+  PASSO_SEM_INTERNET,
+  {
+    titulo: 'Outras melhorias',
+    icone: <MdTaskAlt size={ICONE} />,
+    conteudo: (
+      <ul>
+        <li><strong>Vencimento distante:</strong> despesa que vence a partir de dois meses à frente sai do saldo do mês anterior ao vencimento (vence 05/01, sai do saldo de dezembro).</li>
+        <li><strong>Resumo do mês:</strong> ao quitar o mês, o Marcão mostra quanto sobrou e o que mais pesou.</li>
+        <li><strong>Extrato:</strong> parcelas de compras anteriores ficam no grupo <strong>Parcelas e contas fixas do mês</strong>, abaixo das compras recentes.</li>
+        <li><strong>Acertos:</strong> o mesmo nome escrito de jeitos diferentes conta como uma pessoa só.</li>
+        <li><strong>Sino:</strong> avisa quando o saldo ou a sobra de algum mês da projeção fica negativo.</li>
+        <li><strong>Reserva de emergência:</strong> o valor sugerido passou a ser de {MESES_RESERVA} meses das suas despesas.</li>
+      </ul>
     ),
   },
 ]

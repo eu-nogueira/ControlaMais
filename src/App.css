@@ -31,6 +31,23 @@
     font-weight: 600;
 }
 
+.app-aviso {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    margin-bottom: 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-pequeno);
+    background: var(--cor-superficie-2);
+    color: var(--cor-texto-suave);
+    font-size: .875rem;
+}
+
+.app-aviso svg {
+    flex-shrink: 0;
+}
+
 .app-conteudo {
     min-height: 100vh;
     padding-bottom: calc(var(--altura-nav) + env(safe-area-inset-bottom) + 5rem);

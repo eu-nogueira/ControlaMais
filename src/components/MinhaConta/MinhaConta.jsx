@@ -2,6 +2,7 @@ import { useState } from 'react'
 import supabase, { traduzirErroSenha } from '../../services/supabase'
 import { TEMAS, aplicarTema, lerTemaLocal } from '../../services/tema'
 import { mensagemErro } from '../../services/erros'
+import { VERSAO_NOVIDADES } from '../Tutorial/passos'
 import './MinhaConta.css'
 
 function MinhaConta({ usuario, urlApk, onAbrirTutorial }) {
@@ -119,6 +120,7 @@ function MinhaConta({ usuario, urlApk, onAbrirTutorial }) {
       <section className='minha-conta-secao'>
         <h3>Ajuda</h3>
         <button type='button' className='botao botao-secundario' onClick={() => onAbrirTutorial('geral')}>Ver tutorial do app</button>
+        <button type='button' className='botao botao-secundario' onClick={() => onAbrirTutorial(VERSAO_NOVIDADES)}>Ver novidades</button>
         <button type='button' className='botao botao-secundario' onClick={() => onAbrirTutorial('simulacao')}>Ver tutorial da Simulação</button>
         {urlApk && <a className='botao botao-secundario' href={urlApk} download>Baixar app para Android</a>}
       </section>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { formatarMoeda, juntarLista } from '../../utils/formatar'
 import { formatarMes } from '../../utils/mes'
-import { projetarDisponivel } from '../../utils/simulacao'
+import { descreverOrigemRenda, projetarDisponivel } from '../../utils/simulacao'
 import './Projecao.css'
 
 const PERIODOS = [3, 6, 9, 12]
@@ -74,7 +74,7 @@ function Projecao({ contas, mesAtual }) {
   }, [ativo])
 
   const formatar = (valor) => formatarMoeda(valor)
-  const { renda, mesesRenda, pontos } = projetarDisponivel(contas, mesAtual, periodo)
+  const { renda, estimativa, pontos } = projetarDisponivel(contas, mesAtual, periodo)
 
   const cabecalho = (
     <header className='projecao-cabecalho'>
@@ -106,7 +106,7 @@ function Projecao({ contas, mesAtual }) {
     return (
       <section className='projecao'>
         {cabecalho}
-        <p className='projecao-vazio'>Sem receitas registradas em meses anteriores para estimar a renda média. Registre suas receitas para ver a projeção.</p>
+        <p className='projecao-vazio'>Sem receitas registradas para estimar a renda. Registre suas receitas para ver a projeção.</p>
       </section>
     )
   }
@@ -214,7 +214,7 @@ function Projecao({ contas, mesAtual }) {
       </div>
 
       <p className='projecao-nota'>
-        Renda média de {mesesRenda.length === 1 ? '1 mês anterior' : `${mesesRenda.length} meses anteriores`}.
+        Renda: {descreverOrigemRenda(estimativa)}.
         Gastos à vista futuros não entram na projeção.
       </p>
 

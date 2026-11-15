@@ -774,3 +774,16 @@
         grid-template-columns: 1fr;
     }
 }
+
+.simulacao-check {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .875rem;
+}
+
+.simulacao-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--cor-primaria);
+}

@@ -259,11 +259,12 @@ function ItemMeta({ meta, mesAtual, ocultar, onEditar, onMovimentar }) {
   )
 }
 
-function Metas({ ocultar }) {
+// `sugestaoInicial`: meta ou reserva sugerida pelo Marcão ({ tipo, nome, valorAlvo }), aberta no formulário.
+function Metas({ ocultar, sugestaoInicial }) {
   const { lista, recalculoDispensado, carregado, carregando, erro } = useSelector((state) => state.metas)
   const contas = useSelector((state) => state.extrato.contasExtrato)
   const fechamento = useSelector((state) => state.extrato.fechamento)
-  const [formulario, setFormulario] = useState(null)
+  const [formulario, setFormulario] = useState(() => (sugestaoInicial ? { tipo: 'meta', sugestao: sugestaoInicial } : null))
   const mesAtual = useMesAtual()
   const dispatch = useDispatch()
 
@@ -363,7 +364,7 @@ function Metas({ ocultar }) {
 
       {formulario?.tipo === 'meta' && (
         <Modal titulo={formulario.meta ? 'Editar' : 'Nova meta ou reserva'} onFechar={fecharFormulario}>
-          <FormMeta meta={formulario.meta} mesAtual={mesAtual} sugestaoReserva={sugestaoReserva} onConcluir={fecharFormulario} />
+          <FormMeta meta={formulario.meta} sugestao={formulario.sugestao} mesAtual={mesAtual} sugestaoReserva={sugestaoReserva} onConcluir={fecharFormulario} />
         </Modal>
       )}
 

@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { MdChevronLeft, MdChevronRight, MdClose, MdNorthEast, MdReceiptLong, MdSouthWest } from 'react-icons/md'
 import { formatarDataISO, formatarMoeda } from '../../utils/formatar'
-import { PRIMEIRO_MES, deslocarData, deslocarMes, formatarMes, mesesEntre } from '../../utils/mes'
+import { PRIMEIRO_MES, deslocarMes, formatarMes } from '../../utils/mes'
+import { detalheRepeticao, itensDoMes } from '../../utils/extrato'
 import { ultimoMesComDespesa } from '../../utils/dashboard'
-import { ehContaFixa, totalParcelasDe } from '../../utils/parcelas'
+import { ehContaFixa } from '../../utils/parcelas'
+import { contasComEnvioPendente } from '../../utils/filaOffline'
 import useMesAtual from '../../hooks/useMesAtual'
 import './Extrato.css'
 
@@ -26,24 +28,6 @@ function agruparPorData(itens) {
   }, [])
 }
 
-// Parcelados aparecem em todos os meses do parcelamento, no mesmo dia da compra,
-// com a mesma contagem de parcelas pagas da aba Parcelas; contas fixas, em todos os meses a partir do cadastro;
-// as demais movimentações só no mês em que foram feitas.
-function itensDoMes(contas, mes) {
-  return contas
-    .map((conta) => {
-      const parcelas = totalParcelasDe(conta)
-      const deslocamento = mesesEntre(conta.dataCadastro.slice(0, 7), mes)
-      if (deslocamento < 0 || deslocamento >= parcelas) return null
-      return {
-        conta,
-        data: deslocarData(conta.dataCadastro, deslocamento)
-      }
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.data.localeCompare(a.data))
-}
-
 function ultimoDiaDo(mes) {
   const [ano, numeroMes] = mes.split('-').map(Number)
   return `${mes}-${String(new Date(ano, numeroMes, 0).getDate()).padStart(2, '0')}`
@@ -51,6 +35,8 @@ function ultimoDiaDo(mes) {
 
 function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
   const contas = useSelector((state) => state.extrato.contasExtrato) || []
+  const fila = useSelector((state) => state.extrato.fila)
+  const aguardandoEnvio = contasComEnvioPendente(fila)
   const [filtro, setFiltro] = useState('Todos')
   const [mesEscolhido, setMesEscolhido] = useState(null)
   const [dataEscolhida, setDataEscolhida] = useState('')
@@ -79,16 +65,50 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
 
   const filtrandoData = comFiltro && dataEscolhida.slice(0, 7) === mes
 
-  const itens = comFiltro
+  const { doMes, repeticoes } = comFiltro
     ? itensDoMes(contas, mes)
-    : [...contas].reverse().map((conta) => ({ conta, data: conta.dataCadastro }))
+    : { doMes: [...contas].reverse().map((conta) => ({ conta, data: conta.dataCadastro })), repeticoes: [] }
 
-  const itensFiltrados = itens
-    .filter(({ conta }) => filtro === 'Todos' || conta.tipoConta === filtro)
+  const doTipo = ({ conta }) => filtro === 'Todos' || conta.tipoConta === filtro
+  const itensFiltrados = doMes
+    .filter(doTipo)
     .filter(({ data }) => !filtrandoData || data === dataEscolhida)
     .slice(0, limite)
+  // Repetições não têm data própria: somem quando uma data específica é filtrada.
+  const repeticoesFiltradas = filtrandoData ? [] : repeticoes.filter(doTipo)
 
   const grupos = agruparPorData(itensFiltrados)
+
+  function renderizarItem(conta, detalhe) {
+    const despesa = conta.tipoConta === 'Despesa'
+    return (
+      <li key={conta.id}>
+        <button className='extrato-item' onClick={() => onSelecionar(conta.id)}>
+          <span className={`extrato-icone ${despesa ? 'extrato-icone-despesa' : 'extrato-icone-receita'}`}>
+            {despesa ? <MdNorthEast /> : <MdSouthWest />}
+          </span>
+          <span className='extrato-info'>
+            <span className='extrato-descricao'>{conta.descricao}</span>
+            <span className='extrato-detalhe'>
+              {detalhe ?? (
+                <>
+                  {conta.tipoConta}
+                  {ehContaFixa(conta) && ' · conta fixa'}
+                  {despesa && !ehContaFixa(conta) && Number(conta.parcela) > 1 && ` · ${conta.parcelaPaga || 0} de ${conta.parcela} pagas`}
+                </>
+              )}
+              {despesa && !conta.selected && (conta.responsavel ? ` · ${conta.responsavel} vai pagar` : ' · outra pessoa paga')}
+              {aguardandoEnvio.has(conta.id) && ' · aguardando envio'}
+            </span>
+          </span>
+          <span className={`extrato-valor ${despesa ? (conta.selected ? 'valor-negativo' : 'extrato-valor-neutro') : 'valor-positivo'}`}>
+            {despesa ? '− ' : '+ '}
+            {formatarMoeda(conta.valorFormatado, ocultar)}
+          </span>
+        </button>
+      </li>
+    )
+  }
 
   return (
     <div className='extrato'>
@@ -140,7 +160,7 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
         </div>
       )}
 
-      {grupos.length === 0 ? (
+      {grupos.length === 0 && repeticoesFiltradas.length === 0 ? (
         <div className='extrato-vazio'>
           <MdReceiptLong size={40} />
           <p>
@@ -151,38 +171,25 @@ function Extrato({ ocultar, limite, comFiltro, onSelecionar }) {
           <span>Suas movimentações aparecerão nesta lista.</span>
         </div>
       ) : (
-        grupos.map((grupo, indice) => (
-          <section key={`${grupo.data}-${indice}`} className='extrato-grupo'>
-            <h3 className='extrato-data'>{formatarDataISO(grupo.data)}</h3>
-            <ul className='extrato-lista'>
-              {grupo.itens.map(({ conta }) => {
-                const despesa = conta.tipoConta === 'Despesa'
-                return (
-                  <li key={conta.id}>
-                    <button className='extrato-item' onClick={() => onSelecionar(conta.id)}>
-                      <span className={`extrato-icone ${despesa ? 'extrato-icone-despesa' : 'extrato-icone-receita'}`}>
-                        {despesa ? <MdNorthEast /> : <MdSouthWest />}
-                      </span>
-                      <span className='extrato-info'>
-                        <span className='extrato-descricao'>{conta.descricao}</span>
-                        <span className='extrato-detalhe'>
-                          {conta.tipoConta}
-                          {ehContaFixa(conta) && ' · conta fixa'}
-                          {despesa && !ehContaFixa(conta) && Number(conta.parcela) > 1 && ` · ${conta.parcelaPaga || 0} de ${conta.parcela} pagas`}
-                          {despesa && !conta.selected && (conta.responsavel ? ` · ${conta.responsavel} vai pagar` : ' · outra pessoa paga')}
-                        </span>
-                      </span>
-                      <span className={`extrato-valor ${despesa ? (conta.selected ? 'valor-negativo' : 'extrato-valor-neutro') : 'valor-positivo'}`}>
-                        {despesa ? '− ' : '+ '}
-                        {formatarMoeda(conta.valorFormatado, ocultar)}
-                      </span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        ))
+        <>
+          {grupos.map((grupo, indice) => (
+            <section key={`${grupo.data}-${indice}`} className='extrato-grupo'>
+              <h3 className='extrato-data'>{formatarDataISO(grupo.data)}</h3>
+              <ul className='extrato-lista'>
+                {grupo.itens.map(({ conta }) => renderizarItem(conta))}
+              </ul>
+            </section>
+          ))}
+
+          {repeticoesFiltradas.length > 0 && (
+            <section className='extrato-grupo'>
+              <h3 className='extrato-data'>Parcelas e contas fixas do mês</h3>
+              <ul className='extrato-lista'>
+                {repeticoesFiltradas.map((item) => renderizarItem(item.conta, detalheRepeticao(item)))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
     </div>
   )

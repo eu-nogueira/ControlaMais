@@ -39,7 +39,7 @@ function ItemParcelamento({ conta, ocultar, onEditar }) {
   }
 
   const detalhes = [
-    fixa ? 'Conta fixa' : `${totalParcelas}x de ${formatarMoeda(valorParcela, ocultar)}`,
+    fixa ? 'Conta fixa' : `${totalParcelas}x · total ${formatarMoeda(valorTotal, ocultar)}`,
     !quitado && conta.dataVencimento && `vence ${formatarDataISO(conta.dataVencimento)}`,
     !conta.selected && (conta.responsavel ? `${conta.responsavel} paga` : 'outra pessoa paga'),
     conta.selected && conta.anotarPara && `para ${conta.anotarPara}`,
@@ -58,9 +58,9 @@ function ItemParcelamento({ conta, ocultar, onEditar }) {
             </span>
           )}
         </div>
-        {/* Conta fixa não tem total: mostra só o valor mensal. */}
+        {/* O valor da parcela fica em destaque; o total aparece nos detalhes. */}
         <span className='parcelamento-total'>
-          {fixa ? <>{formatarMoeda(valorParcela, ocultar)}<small>/mês</small></> : formatarMoeda(valorTotal, ocultar)}
+          {formatarMoeda(valorParcela, ocultar)}<small>/mês</small>
         </span>
       </div>
 
