@@ -207,7 +207,7 @@ function Projecao({ contas, mesAtual }) {
               <div className='projecao-dica-total'><dt>Sobra</dt><dd>{formatar(pontoAtivo.sobra)}</dd></div>
             </dl>
             {pontoAtivo.encerrados.length > 0 && (
-              <small>Terminou no mês anterior: {juntarLista(pontoAtivo.encerrados.map((divida) => divida.descricao))}.</small>
+              <small>Termina este mês {juntarLista(pontoAtivo.encerrados.map((divida) => divida.descricao))}.</small>
             )}
           </div>
         )}
